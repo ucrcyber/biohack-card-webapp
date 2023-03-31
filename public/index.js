@@ -22,6 +22,8 @@ const analytics = getAnalytics(app);
 const database = getDatabase(app);
 const auth = getAuth(app);
 
+const cardIdToName = {};
+
 function clearChildren(htmlElement){
     while(htmlElement.firstChild){
         htmlElement.removeChild(htmlElement.firstChild);
@@ -37,17 +39,36 @@ function addButton({ parentElement, label, callback }){
 
 function trackReader({id, name, active, lastCard, lastCardTime}){
     const div = document.createElement('div');
-    div.innerText = id;
-    const label = document.createElement('div');
-    onValue(child(ref(database), `readers/${id}/n`), snapshot => label.innerText = `${name=snapshot.val()} ${lastCard} @ ${new Date(lastCardTime)}`, console.error);
-    onValue(child(ref(database), `readers/${id}/c`), snapshot => label.innerText = `${name} ${lastCard=snapshot.val()} @ ${new Date(lastCardTime)}`, console.error);
-    onValue(child(ref(database), `readers/${id}/t`), snapshot => label.innerText = `${name} ${lastCard} @ ${new Date(lastCardTime=snapshot.val())}`, console.error);
+    const deviceId = document.createElement('span');
+        deviceId.classList.add('itemId');
+        deviceId.innerText = id;
+    const deviceAlias = document.createElement('span');
+        deviceAlias.classList.add('itemName');
+    const lastCardRead = document.createElement('span');
+        lastCardRead.classList.add('cardId');
+    const lastCardTimeLabel = document.createElement('span');
+        lastCardTimeLabel.classList.add('duration');
+    onValue(child(ref(database), `readers/${id}/n`), snapshot => deviceAlias.innerText = `${name=snapshot.val()}`, console.error);
+    onValue(child(ref(database), `readers/${id}/c`), snapshot => lastCardRead.innerText = `${lastCard=snapshot.val()} ` + (lastCard in cardIdToName ? `(${cardIdToName[id]})` : ""), console.error);
+    onValue(child(ref(database), `readers/${id}/t`), snapshot => lastCardTime = snapshot.val(), console.error);
+
+    setInterval(() => {
+        const timeElaspedSinceRead = Date.now() - lastCardTime;
+        if(timeElaspedSinceRead < 60e3){
+            lastCardTimeLabel.innerText = `${Math.floor(timeElaspedSinceRead/60e3)} s`;
+        }else if(timeElaspedSinceRead < 60*60e3){
+            lastCardTimeLabel.innerText = `${Math.floor(timeElaspedSinceRead/3600e3)} m`;
+        }else{
+            lastCardTimeLabel.innerText = `> 1 hr`;
+        }
+        lastCardRead.innerText = `${lastCard} ` + (lastCard in cardIdToName ? `(${cardIdToName[lastCard]})` : "")
+    }, 1e3);
 
     const activeCheckbox = document.createElement('input');
     activeCheckbox.type = "checkbox";
     onValue(child(ref(database), `readers/${id}/a`), snapshot => activeCheckbox.checked = active = snapshot.val(), console.error);
 
-    div.append(label, activeCheckbox);
+    div.append(deviceId, deviceAlias, lastCardRead, lastCardTimeLabel, activeCheckbox);
     addButton({
         parentElement: div,
         label: "Register card",
@@ -61,8 +82,7 @@ function trackReader({id, name, active, lastCard, lastCardTime}){
     });
     document.querySelector('#deviceList').append(div);
     
-    div.addEventListener('click', event => {
-        if(!event.altKey) return;
+    deviceAlias.addEventListener('click', event => {
         const newName = prompt(`Enter a new name for reader ${name}`);
         if(newName)
             set(child(ref(database), `readers/${id}/n`), newName).catch(console.error);
@@ -73,15 +93,18 @@ function trackReader({id, name, active, lastCard, lastCardTime}){
 }
 function trackCard({ id }){
     const div = document.createElement('div');
-    div.innerText = id;
-    const label = document.createElement('div');
-    onValue(child(ref(database), `cards/${id}/ch`), snapshot => label.innerText = snapshot.val(), console.error);
+    const cardId = document.createElement('span');
+        cardId.classList.add('itemId');
+        cardId.innerText = id;
+    const label = document.createElement('span');
+        label.classList.add('itemName');
+    onValue(child(ref(database), `cards/${id}/ch`), snapshot => label.innerText = cardIdToName[id] = snapshot.val(), console.error);
 
     const activeCheckbox = document.createElement('input');
     activeCheckbox.type = "checkbox";
     onValue(child(ref(database), `cards/${id}/a`), snapshot => activeCheckbox.checked = snapshot.val(), console.error);
 
-    div.append(label, activeCheckbox);
+    div.append(cardId, label, activeCheckbox);
     document.querySelector('#cardList').append(div);
     
     label.addEventListener('click', event => {
