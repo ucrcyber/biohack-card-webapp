@@ -33,6 +33,7 @@ html, body {
     font-family: monospace;
     font-size: 0.8em;
     opacity: 0.5;
+    padding: 1em;
 }
 .cardId {
     display: inline-block;

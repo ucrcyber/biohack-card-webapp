@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.19.0/firebase-analytics.js";
-import { getDatabase, ref, get, set, push, child, onChildAdded, onValue } from "https://www.gstatic.com/firebasejs/9.19.0/firebase-database.js";
+import { getDatabase, ref, get, set, update, push, child, onChildAdded, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.19.0/firebase-database.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.19.0/firebase-auth.js";
 
 // Your web app's Firebase configuration
@@ -55,9 +55,9 @@ function trackReader({id, name, active, lastCard, lastCardTime}){
     setInterval(() => {
         const timeElaspedSinceRead = Date.now() - lastCardTime;
         if(timeElaspedSinceRead < 60e3){
-            lastCardTimeLabel.innerText = `${Math.floor(timeElaspedSinceRead/60e3)} s`;
+            lastCardTimeLabel.innerText = `${Math.floor(timeElaspedSinceRead/1e3)} s`;
         }else if(timeElaspedSinceRead < 60*60e3){
-            lastCardTimeLabel.innerText = `${Math.floor(timeElaspedSinceRead/3600e3)} m`;
+            lastCardTimeLabel.innerText = `${Math.floor(timeElaspedSinceRead/60e3)} m`;
         }else{
             lastCardTimeLabel.innerText = `> 1 hr`;
         }
@@ -143,4 +143,17 @@ document.querySelector('#loginButton').addEventListener('click', () => {
     }).catch(({ code, message }) => {
         alert(`Login fail: ${message}`);
     });
+});
+
+addButton({
+    parentElement: document.querySelector('#debugButtons'),
+    label: "Update reader",
+    callback: () => {
+        const card = prompt("What card should be read? (device:test) (default:testcard)") || "testcard";
+
+        update(child(ref(database), `readers/test`), {
+            c: card,
+            t: serverTimestamp(),
+        });
+    },
 });
