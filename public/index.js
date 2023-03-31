@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.19.0/firebase-analytics.js";
-import { getDatabase, ref, set, get, child, onChildAdded, onValue } from "https://www.gstatic.com/firebasejs/9.19.0/firebase-database.js";
+import { getDatabase, ref, get, set, push, child, onChildAdded, onValue } from "https://www.gstatic.com/firebasejs/9.19.0/firebase-database.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.19.0/firebase-auth.js";
 
 // Your web app's Firebase configuration
@@ -28,9 +28,15 @@ function clearChildren(htmlElement){
     }
 }
 
+function addButton({ parentElement, label, callback }){
+    const button = document.createElement('button');
+    button.innerText = label;
+    button.addEventListener('click', callback);
+    parentElement.append(button);
+}
+
 function trackReader({id, name, active, lastCard, lastCardTime}){
     const div = document.createElement('div');
-    div.classList.add('reader');
     div.innerText = id;
     const label = document.createElement('div');
     onValue(child(ref(database), `readers/${id}/n`), snapshot => label.innerText = `${name=snapshot.val()} ${lastCard} @ ${new Date(lastCardTime)}`, console.error);
@@ -42,6 +48,17 @@ function trackReader({id, name, active, lastCard, lastCardTime}){
     onValue(child(ref(database), `readers/${id}/a`), snapshot => activeCheckbox.checked = active = snapshot.val(), console.error);
 
     div.append(label, activeCheckbox);
+    addButton({
+        parentElement: div,
+        label: "Register card",
+        callback: () => {
+            const cardholder = prompt(`Enter the cardholder email.`);
+            set(child(ref(database), `cards/${lastCard}`), {
+                ch: cardholder,
+                a: true,
+            });
+        },
+    });
     document.querySelector('#deviceList').append(div);
     
     div.addEventListener('click', event => {
@@ -54,16 +71,44 @@ function trackReader({id, name, active, lastCard, lastCardTime}){
         set(child(ref(database), `readers/${id}/a`), activeCheckbox.checked).catch(console.error);
     });
 }
+function trackCard({ id }){
+    const div = document.createElement('div');
+    div.innerText = id;
+    const label = document.createElement('div');
+    onValue(child(ref(database), `cards/${id}/ch`), snapshot => label.innerText = snapshot.val(), console.error);
 
+    const activeCheckbox = document.createElement('input');
+    activeCheckbox.type = "checkbox";
+    onValue(child(ref(database), `cards/${id}/a`), snapshot => activeCheckbox.checked = snapshot.val(), console.error);
+
+    div.append(label, activeCheckbox);
+    document.querySelector('#cardList').append(div);
+    
+    label.addEventListener('click', event => {
+        const newName = prompt(`Enter a new cardholder name.`);
+        if(newName)
+            set(child(ref(database), `cards/${id}/n`), newName).catch(console.error);
+    });
+    activeCheckbox.addEventListener('change', () => {
+        set(child(ref(database), `cards/${id}/a`), activeCheckbox.checked).catch(console.error);
+    });
+}
+
+let loggedInOnce = false;
 auth.onAuthStateChanged(user => {
     document.querySelector('#login').style.display = user ? "none" : "block";
-    if(user){
+    if(user && !loggedInOnce){
         onChildAdded(child(ref(database), `readers`), (snapshot) => {
             const id = snapshot.key;
             const reader = snapshot.val();
             const [name, active, lastCard, lastCardTime] = ["n", "a", "c", "t"].map(k => reader[k]);
             trackReader({ id, name, active, lastCard, lastCardTime });
         }, console.error);
+        onChildAdded(child(ref(database), `cards`), (snapshot) => {
+            const id = snapshot.key;
+            trackCard({ id });
+        }, console.error);
+        loggedInOnce = true;
     }
 });
 

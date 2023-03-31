@@ -12,7 +12,9 @@
           ".write": "auth !== null && ($user === auth.uid || root.child('users').child(auth.uid).child('p').val() > root.child('users').child($user).child('p').val())",
         },
         ".validate": "newData.hasChildren(['p','n']) && newData.child('p').isNumber()",
+        ".read": "$user === auth.uid",
       },
+      ".read": "root.child('users').child(auth.uid).child('p').val() >= 2",
     },
     "cards": {
       "$card": {
@@ -27,14 +29,17 @@
         ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
         ".write": "root.child('users').child(auth.uid).child('p').val() >= 1",
       },
+      ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
 		},
     "readers": {
       "$reader": {
         "n": { // name
           ".validate": "newData.isString() && newData.val().length <= 32",
+          ".write": "root.child('users').child(auth.uid).child('p').val() >= 1 || !data.exists()",
         },
         "a": { // active
           ".validate": "newData.isBoolean()",
+          ".write": "root.child('users').child(auth.uid).child('p').val() >= 1 || (!data.exists() && newData.val() === false)",
         },
         "c": { // last card scanned
           ".validate": "newData.isString()",
@@ -48,6 +53,7 @@
         // todo: add switch for allowing this to be writable?
         ".write": "newData.hasChildren(['c', 't']) && newData.child('t').val() === now && (!data.exists() || data.child('t').val()+1000 <= now)",
       },
+      ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
     },
     "events": {
       "$event": {
@@ -61,6 +67,7 @@
         ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
         ".write": "root.child('users').child(auth.uid).child('p').val() >= 1",
       },
+      ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
     },
     // these events will not be deleted i guess
     "re": { // Reader Events
@@ -81,6 +88,7 @@
         // card events cannot be overwritten or deleted
         ".write": "!data.exists() && newData.exists()",
       },
+      ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
     },
     "ra": { // Reader Role Assignments
       "$readerAssignment": {
@@ -100,6 +108,7 @@
         // assignments cannot be overwritten or deleted
         ".write": "!data.exists() && newData.exists()",
       },
+      ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
     },
     ".read": false,
     ".write": false,
