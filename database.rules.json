@@ -1,0 +1,107 @@
+{
+  /* Visit https://firebase.google.com/docs/database/security to learn more about security rules. */
+  "rules": {
+    "users": {
+      "$user": {
+        "p": { // permission level (1+ is Operator) -- should probably just have a bool of perms but o well, this works fine
+          ".validate": "newData.isNumber()",
+          ".write": "auth != null && newData.val() < root.child('users').child(auth.uid).child('p').val() && $user !== auth.uid",
+        },
+        "n": { // name
+          ".validate": "newData.isString() && newData.val().length <= 32",
+          ".write": "auth !== null && ($user === auth.uid || root.child('users').child(auth.uid).child('p').val() > root.child('users').child($user).child('p').val())",
+        },
+        ".validate": "newData.hasChildren(['p','n']) && newData.child('p').isNumber()",
+      },
+    },
+    "cards": {
+      "$card": {
+        "ch": { // cardholder
+          ".validate": "newData.isString() && newData.val().length <= 32",
+        },
+        "a": { // active
+          ".validate": "newData.isBoolean()",
+        },
+        ".validate": "$card.length <= 32",
+        // only be able to set/read cards as Operator
+        ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
+        ".write": "root.child('users').child(auth.uid).child('p').val() >= 1",
+      },
+		},
+    "readers": {
+      "$reader": {
+        "n": { // name
+          ".validate": "newData.isString() && newData.val().length <= 32",
+        },
+        "a": { // active
+          ".validate": "newData.isBoolean()",
+        },
+        "c": { // last card scanned
+          ".validate": "newData.isString()",
+        },
+        "t": { // time of last card scanned
+          ".validate": "newData.isNumber()",
+        },
+        // only be able to read as Operator
+        ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
+        // for the sync step, this just enforces format and the time
+        // todo: add switch for allowing this to be writable?
+        ".write": "newData.hasChildren(['c', 't']) && newData.child('t').val() === now && (!data.exists() || data.child('t').val()+1000 <= now)",
+      },
+    },
+    "events": {
+      "$event": {
+        "n": { // name
+          ".validate": "newData.isString() && newData.val().length <= 32",
+        },
+        "d": { // description
+          ".validate": "newData.isString() && newData.val().length <= 200",
+        },
+        // only be able to set events as Operator
+        ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
+        ".write": "root.child('users').child(auth.uid).child('p').val() >= 1",
+      },
+    },
+    // these events will not be deleted i guess
+    "re": { // Reader Events
+      "$readerEvent": {
+        "t": { // time of ReaderEvent
+          ".validate": "newData.isNumber()",
+        },
+        "c": { // card scanned in ReaderEvent
+          ".validate": "newData.isString() && newData.val().length <= 32",
+        },
+        "r": { // which reader is doing this
+          ".validate": "newData.isString() && newData.val().length <= 32",
+        },
+        // check that time checks out AND the reader is active
+        ".validate": "newData.hasChildren(['t', 'c', 'r']) && newData.child('t').val() === now && root.child('readers').child(newData.child('r').val()).child('a').val() === true",
+        // only be able to read as Operator
+        ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
+        // card events cannot be overwritten or deleted
+        ".write": "!data.exists() && newData.exists()",
+      },
+    },
+    "ra": { // Reader Role Assignments
+      "$readerAssignment": {
+        "t": { // time of Reader Role Assignment
+          ".validate": "newData.isNumber()",
+        },
+        "e": { // what is the new event
+          ".validate": "newData.isString() && newData.val().length <= 32",
+        },
+        "r": { // which reader this change is applied to
+          ".validate": "newData.isString() && newData.val().length <= 32",
+        },
+        // just make sure the time checks out
+        ".validate": "newData.hasChildren(['t', 'e', 'r']) && newData.child('t').val() === now",
+        // only be able to read as Operator
+        ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
+        // assignments cannot be overwritten or deleted
+        ".write": "!data.exists() && newData.exists()",
+      },
+    },
+    ".read": false,
+    ".write": false,
+  }
+}
