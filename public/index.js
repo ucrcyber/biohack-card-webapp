@@ -68,16 +68,17 @@ function trackReader({id, name, active, lastCard, lastCardTime}){
     activeCheckbox.type = "checkbox";
     onValue(child(ref(database), `readers/${id}/a`), snapshot => activeCheckbox.checked = active = snapshot.val(), console.error);
 
-    div.append(deviceId, deviceAlias, lastCardRead, lastCardTimeLabel, activeCheckbox);
+    div.append(deviceId, deviceAlias, lastCardTimeLabel, lastCardRead, activeCheckbox);
     addButton({
         parentElement: div,
         label: "Register card",
         callback: () => {
             const cardholder = prompt(`Enter the cardholder email.`);
-            set(child(ref(database), `cards/${lastCard}`), {
-                ch: cardholder,
-                a: true,
-            });
+            if(cardholder)
+                set(child(ref(database), `cards/${lastCard}`), {
+                    ch: cardholder,
+                    a: true,
+                });
         },
     });
     document.querySelector('#deviceList').append(div);
@@ -145,15 +146,16 @@ document.querySelector('#loginButton').addEventListener('click', () => {
     });
 });
 
-addButton({
-    parentElement: document.querySelector('#debugButtons'),
-    label: "Update reader",
-    callback: () => {
-        const card = prompt("What card should be read? (device:test) (default:testcard)") || "testcard";
-
-        update(child(ref(database), `readers/test`), {
-            c: card,
-            t: serverTimestamp(),
-        });
-    },
-});
+for(const testDeviceId of ['test', 'test2']){
+    addButton({
+        parentElement: document.querySelector('#debugButtons'),
+        label: `Update reader ${testDeviceId}`,
+        callback: () => {
+            const card = prompt(`What card should be read? (device:${testDeviceId}) (default:testcard)`) || "testcard";
+            update(child(ref(database), `readers/${testDeviceId}`), {
+                c: card,
+                t: serverTimestamp(),
+            });
+        },
+    });
+}

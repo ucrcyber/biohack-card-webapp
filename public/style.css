@@ -30,10 +30,14 @@ html, body {
 }
 
 .duration {
+    display: inline-block;
     font-family: monospace;
     font-size: 0.8em;
     opacity: 0.5;
-    padding: 1em;
+    padding: 0 1em 0 1em;
+
+    width: 6em;
+    text-align: right;
 }
 .cardId {
     display: inline-block;

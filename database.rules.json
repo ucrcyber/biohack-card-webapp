@@ -45,13 +45,13 @@
           ".validate": "newData.isString()",
         },
         "t": { // time of last card scanned
-          ".validate": "newData.isNumber()",
+          ".validate": "newData.isNumber() && newData.val() === now && (!data.exists() || data.val()+1000 <= now)",
         },
         // only be able to read as Operator
         ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
         // for the sync step, this just enforces format and the time
         // todo: add switch for allowing this to be writable?
-        ".write": "newData.hasChildren(['c', 't']) && newData.child('t').val() === now && (!data.exists() || data.child('t').val()+1000 <= now)",
+        ".write": "newData.hasChildren(['c', 't'])",
       },
       ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
     },
