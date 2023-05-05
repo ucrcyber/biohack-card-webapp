@@ -21,6 +21,15 @@
       },
       ".read": "root.child('users').child(auth.uid).child('p').val() >= 2",
     },
+    "data": {
+      "$emailFormatted": { // . is replaced with @ since invalid character for firebase keys
+        "e": { // email (cannot be verified so only admin can set it)
+          ".write": "root.child('users').child(auth.uid).child('p').val() >= 2",
+        },
+        ".write": "root.child('users').child(auth.uid).child('p').val() >= 2",
+        ".read": "data.child('e').val() === auth.token.email || root.child('users').child(auth.uid).child('p').val() >= 1",
+      },
+    },
     "cards": {
       "$card": {
         "ch": { // cardholder (email)
