@@ -9,38 +9,12 @@ html, body {
     top: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease-out;
 }
-
-.itemId {
-    display: inline-block;
-    font-family: monospace;
-    padding-left: 1em;
-    
-    width: 10em;
-    opacity: 0.5;
+#login:hover {
+    background: rgba(255, 255, 255, 0.1);
 }
-.itemName {
-    display: inline-block;
-    font-family: sans-serif;
-    font-weight: bold;
-    padding-left: 1em;
-
-    width: 10em;
-}
-
-.duration {
-    display: inline-block;
-    font-family: monospace;
-    font-size: 0.8em;
-    opacity: 0.5;
-    padding: 0 1em 0 1em;
-
-    width: 6em;
-    text-align: right;
-}
-.cardId {
-    display: inline-block;
-    font-family: monospace;
-    padding-left: 1em;
+#login:active {
+    transform: scale(0.9);
 }

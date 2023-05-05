@@ -5,21 +5,26 @@
       "$user": {
         "p": { // permission level (1+ is Operator) -- should probably just have a bool of perms but o well, this works fine
           ".validate": "newData.isNumber()",
-          ".write": "auth != null && newData.val() < root.child('users').child(auth.uid).child('p').val() && $user !== auth.uid",
+          ".write": "newData.val() == 0",
+          // ".write": "false && auth != null && newData.val() < root.child('users').child(auth.uid).child('p').val() && $user !== auth.uid",
         },
-        "n": { // name
-          ".validate": "newData.isString() && newData.val().length <= 32",
-          ".write": "auth !== null && ($user === auth.uid || root.child('users').child(auth.uid).child('p').val() > root.child('users').child($user).child('p').val())",
+        "e": { // email (write to once, and it gotta be your own email); used for linking cards
+          ".validate": "newData.val() === auth.token.email",
+          ".write": "$user === auth.uid && !data.exists()",
         },
-        ".validate": "newData.hasChildren(['p','n']) && newData.child('p').isNumber()",
-        ".read": "$user === auth.uid",
+        "t": { // current time (of qr code generation)
+          ".validate": "newData.val() === now",
+        },
+        ".validate": "newData.hasChildren(['e', 't'])",
+        ".read": "$user === auth.uid || root.child('users').child(auth.uid).child('p').val() >= 1",
+        ".write": "$user === auth.uid",
       },
       ".read": "root.child('users').child(auth.uid).child('p').val() >= 2",
     },
     "cards": {
       "$card": {
-        "ch": { // cardholder
-          ".validate": "newData.isString() && newData.val().length <= 32",
+        "ch": { // cardholder (email)
+          ".validate": "newData.isString() && newData.val().length <= 64",
         },
         "a": { // active
           ".validate": "newData.isBoolean()",
@@ -31,30 +36,6 @@
       },
       ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
 		},
-    "readers": {
-      "$reader": {
-        "n": { // name
-          ".validate": "newData.isString() && newData.val().length <= 32",
-          ".write": "root.child('users').child(auth.uid).child('p').val() >= 1 || !data.exists()",
-        },
-        "a": { // active
-          ".validate": "newData.isBoolean()",
-          ".write": "root.child('users').child(auth.uid).child('p').val() >= 1 || (!data.exists() && newData.val() === false)",
-        },
-        "c": { // last card scanned
-          ".validate": "newData.isString()",
-        },
-        "t": { // time of last card scanned
-          ".validate": "newData.isNumber() && newData.val() === now && (!data.exists() || data.val()+1000 <= now)",
-        },
-        // only be able to read as Operator
-        ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
-        // for the sync step, this just enforces format and the time
-        // todo: add switch for allowing this to be writable?
-        ".write": "newData.hasChildren(['c', 't'])",
-      },
-      ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
-    },
     "events": {
       "$event": {
         "n": { // name
@@ -73,40 +54,19 @@
     "re": { // Reader Events
       "$readerEvent": {
         "t": { // time of ReaderEvent
-          ".validate": "newData.isNumber()",
+          ".validate": "newData.isNumber() && newData.val() === now",
         },
         "c": { // card scanned in ReaderEvent
           ".validate": "newData.isString() && newData.val().length <= 32",
         },
-        "r": { // which reader is doing this
+        "e": { // event id
           ".validate": "newData.isString() && newData.val().length <= 32",
         },
-        // check that time checks out AND the reader is active
-        ".validate": "newData.hasChildren(['t', 'c', 'r']) && newData.child('t').val() === now && root.child('readers').child(newData.child('r').val()).child('a').val() === true",
-        // only be able to read as Operator
-        ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
         // card events cannot be overwritten or deleted
-        ".write": "!data.exists() && newData.exists()",
-      },
-      ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
-    },
-    "ra": { // Reader Role Assignments
-      "$readerAssignment": {
-        "t": { // time of Reader Role Assignment
-          ".validate": "newData.isNumber()",
-        },
-        "e": { // what is the new event
-          ".validate": "newData.isString() && newData.val().length <= 32",
-        },
-        "r": { // which reader this change is applied to
-          ".validate": "newData.isString() && newData.val().length <= 32",
-        },
-        // just make sure the time checks out
-        ".validate": "newData.hasChildren(['t', 'e', 'r']) && newData.child('t').val() === now",
+        ".validate": "newData.hasChildren(['t', 'c', 'e']) && !data.exists() && newData.exists()",
         // only be able to read as Operator
         ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
-        // assignments cannot be overwritten or deleted
-        ".write": "!data.exists() && newData.exists()",
+        ".write": "root.child('users').child(auth.uid).child('p').val() >= 1",
       },
       ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
     },
