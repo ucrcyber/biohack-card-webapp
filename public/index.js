@@ -31,7 +31,12 @@ const qrcode = new QRCode(document.getElementById("qrcode"), {
   colorLight: "#fff",
   correctLevel: QRCode.CorrectLevel.H,
 });
-qrcode.clear();
+qrcodeDisplay();
+function qrcodeDisplay(code){
+  console.log("qrUpdate", code);
+  document.getElementById("qrcode").style.display = code ? "flex" : "none";
+  qrcode.makeCode(code || ""); // reset qrcode display
+}
 
 document.querySelector('#login').addEventListener('click', async () => {
   const {user} = await signInWithPopup(auth, provider);
@@ -52,7 +57,8 @@ document.querySelector('#login').addEventListener('click', async () => {
       console.log("(usercheck) Pass");
       console.log(userdataSnapshot);
       
-      qrcode.makeCode(`${window.location.origin}/?data=${encodeURIComponent(`${userSnapshot.e},${userSnapshot.t}`)}`);
+      qrcodeDisplay(`${window.location.origin}/?data=${encodeURIComponent(`${user.uid},${userSnapshot.t}`)}`);
+      updateFeedback("Show this QR code at check-in.");
     } catch(error) {
       console.warn("(usercheck) Fail");
       updateFeedback("This email is not associated with any registered participants. Please log in with the ucr.edu or gmail account you used to register.");
@@ -164,24 +170,34 @@ function loadReaderApplication(){
       alert("Serial API not found, make sure you are on a chromium based browser and are using https");
     }
 
-    qrcode.makeCode(`${window.location.origin}/?peer=${encodeURIComponent(id)}`);
+    qrcodeDisplay(`${window.location.origin}/?peer=${encodeURIComponent(id)}`);
     peerReconnect.onclick = () => {
-      qrcode.makeCode(`${window.location.origin}/?peer=${encodeURIComponent(id)}`);
+      qrcodeDisplay(`${window.location.origin}/?peer=${encodeURIComponent(id)}`);
       peerReconnect.disabled = true;
     };
     peer.on("connection", (connection) => {
       console.log(qrcode);
-      qrcode.clear();
+      qrcodeDisplay();
       peerReconnect.disabled = false;
       // Receive messages
-      connection.on("data", (data) => {
+      connection.on("data", async (data) => {
         console.log("Received", data);
         connection.send("ok");
         connection.close();
+        
+        const [uid, time] = data.split(','); // what client claims
+        const userEmail = (await get(child(ref(database), `users/${uid}/e`))).val(); // what server says
+        const timeUpdate = (await get(child(ref(database), `users/${uid}/t`))).val(); // what server says
+        if(+time === timeUpdate){
+          // its all good
+          updateFeedback(`Valid user data recieved ${userEmail} ${uid}`);
+        }else{
+          updateFeedback("Invalid code (timestamp mismatch), ask for user to reload page");
+        }
       });
-      connection.on("open", () => console.log(" >!!", connection.peer));
-      connection.on("close", () => console.log("<--<", connection.peer));
-      console.log(" >>>", connection.peer);
+      // connection.on("open", () => console.log(" >!!", connection.peer));
+      // connection.on("close", () => console.log("<--<", connection.peer));
+      // console.log(" >>>", connection.peer);
     });
   });
 
