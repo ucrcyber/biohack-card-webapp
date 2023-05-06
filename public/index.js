@@ -108,16 +108,34 @@ function updateFeedback(text){
   document.querySelector('#feedback').innerText = text;
 }
 function updatePeripheralData(data){
-  peripheralData = data;
   const div = document.querySelector("#peripheralData");
+  if(!peripheralData !== !data){
+    div.style.animation = 'none';
+    div.offsetHeight; /* trigger reflow */
+    div.style.animation = ''; 
+    div.style.animationDelay = '0s';
+  }
   div.style.background = data ? "darkgreen" : "darkred";
   div.innerText = data ? "User OK" : "no user";
+  peripheralData = data;
+  updateLinkStatus();
 }
 function updateReaderData(data){
-  readerData = data;
   const div = document.querySelector("#readerData");
+  if(!peripheralData !== !data){
+    div.style.animation = 'none';
+    div.offsetHeight; /* trigger reflow */
+    div.style.animation = '';
+    div.style.animationDelay = '0s';
+  }
   div.style.background = data ? "darkgreen" : "darkred";
   div.innerText = data ? "Card OK" : "no card scanned";
+  readerData = data;
+  updateLinkStatus();
+}
+function updateLinkStatus(){
+  const button = document.querySelector('#linkCards');
+  button.disabled = !(readerData && peripheralData);
 }
 function loadReaderApplication(){
   let currentCard = null;
@@ -178,6 +196,7 @@ function loadReaderApplication(){
   };
 
   const linkCardsButton = document.createElement("button");
+  linkCardsButton.id = "linkCards";
   linkCardsButton.innerText = "Link to card";
   linkCardsButton.disabled = true;
   linkCardsButton.addEventListener('click', () => {

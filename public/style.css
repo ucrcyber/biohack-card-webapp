@@ -4,11 +4,11 @@
 }
 
 @keyframes flickerIn {
-    0%, 36%, 60%, 96%, 100%{
+    36%, 60%, 96%, 100%{
         opacity: 1;
         animation-timing-function: steps(1, end);
     }
-    12%, 48%, 72% {
+    0%, 12%, 48%, 72% {
         opacity: 0;
         animation-timing-function: steps(1, end);
     }
@@ -42,7 +42,7 @@ html, body {
     transform: translate(-50%,-50%);
 }
 button {
-    animation: 0.2s 1 normal forwards flickerIn;
+    animation: 0.2s 1 normal both flickerIn;
     transition: backgroundColor 0.2s ease-out;
     border-radius: 5px;
 }
@@ -50,7 +50,7 @@ button:hover {
     background: rgba(255, 255, 255, 0.1);
 }
 button:active {
-    animation: 0.2s 1 normal forwards flickerOut;
+    animation: 0.2s 1 normal both flickerOut;
 }
 
 button, .statusBar {
@@ -61,8 +61,7 @@ button, .statusBar {
     color: white;
     display: inline-block;
     border-radius: 5px;
-    animation: 0.2s 1 normal forwards flickerIn;
-    animation-delay: 0.4s;
+    animation: 0.2s 0.4s 1 normal both flickerIn;
 }
 .actionBar {
     display: flex;
