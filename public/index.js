@@ -199,8 +199,12 @@ function loadReaderApplication(){
   linkCardsButton.id = "linkCards";
   linkCardsButton.innerText = "Link to card";
   linkCardsButton.disabled = true;
-  linkCardsButton.addEventListener('click', () => {
+  linkCardsButton.addEventListener('click', async () => {
     console.log("DATAS", peripheralData, readerData);
+
+    update(child(ref(database), `cards/${readerData}`), { e: peripheralData.email });
+    update(child(ref(database), `data/${peripheralData.emailAsKey}`), { card: readerData });
+
     updatePeripheralData();
     updateReaderData();
   });
@@ -249,6 +253,7 @@ function loadReaderApplication(){
           updateFeedback(`Valid user data recieved ${userEmail} ${uid} ${userdataSnapshot}`);
           updatePeripheralData({
             email: userEmail,
+            emailAsKey: userEmail.replaceAll('.','@'),
             uid,
             user: userdataSnapshot,
           });
@@ -267,5 +272,5 @@ function loadReaderApplication(){
   document.body.append(container);
 
   updatePeripheralData();
-  updateReaderData("12378");
+  updateReaderData("testcardnumber");
 }
