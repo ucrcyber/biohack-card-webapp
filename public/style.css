@@ -60,6 +60,8 @@ button, .statusBar {
     color: white;
     display: inline-block;
     border-radius: 5px;
+    animation: 0.2s 1 normal forwards flickerIn;
+    animation-delay: 0.4s;
 }
 .actionBar {
     display: flex;
@@ -68,6 +70,7 @@ button, .statusBar {
     align-items: center;
     gap: 2px;
     padding-top: 1em;
+    transition: backgroundColor 0.5s ease-in-out;
 }
 
 #qrcode {

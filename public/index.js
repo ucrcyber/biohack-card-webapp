@@ -177,6 +177,15 @@ function loadReaderApplication(){
     }
   };
 
+  const linkCardsButton = document.createElement("button");
+  linkCardsButton.innerText = "Link to card";
+  linkCardsButton.disabled = true;
+  linkCardsButton.addEventListener('click', () => {
+    console.log("DATAS", peripheralData, readerData);
+    updatePeripheralData();
+    updateReaderData();
+  });
+
   const peripheralDataStatus = document.createElement("div");
   peripheralDataStatus.classList.add('statusBar');
   peripheralDataStatus.id = "peripheralData";
@@ -235,7 +244,7 @@ function loadReaderApplication(){
     });
   });
 
-  container.append(openReaderButton, peerReconnect, peripheralDataStatus, readerDataStatus);
+  container.append(openReaderButton, peerReconnect, peripheralDataStatus, readerDataStatus, linkCardsButton);
   document.body.append(container);
 
   updatePeripheralData();
