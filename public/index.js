@@ -22,6 +22,7 @@ const analytics = getAnalytics(app);
 const database = getDatabase(app);
 const auth = getAuth(app);
 
+let peripheralData, readerData;
 const provider = new GoogleAuthProvider();
 
 const qrcode = new QRCode(document.getElementById("qrcode"), {
@@ -106,9 +107,22 @@ function load(){
 function updateFeedback(text){
   document.querySelector('#feedback').innerText = text;
 }
+function updatePeripheralData(data){
+  peripheralData = data;
+  const div = document.querySelector("#peripheralData");
+  div.style.background = data ? "darkgreen" : "darkred";
+  div.innerText = data ? "User OK" : "no user";
+}
+function updateReaderData(data){
+  readerData = data;
+  const div = document.querySelector("#readerData");
+  div.style.background = data ? "darkgreen" : "darkred";
+  div.innerText = data ? "Card OK" : "no card scanned";
+}
 function loadReaderApplication(){
   let currentCard = null;
   const container = document.createElement("div");
+  container.classList.add('actionBar');
   const peerReconnect = document.createElement("button");
   peerReconnect.innerText = "Reconnect";
   peerReconnect.disabled = true;
@@ -163,6 +177,14 @@ function loadReaderApplication(){
     }
   };
 
+  const peripheralDataStatus = document.createElement("div");
+  peripheralDataStatus.classList.add('statusBar');
+  peripheralDataStatus.id = "peripheralData";
+
+  const readerDataStatus = document.createElement("div");
+  readerDataStatus.classList.add('statusBar');
+  readerDataStatus.id = "readerData";
+
   const peer = new Peer();
   peer.on("open", (id) => {
     if(!navigator.serial){
@@ -186,14 +208,26 @@ function loadReaderApplication(){
         connection.close();
         
         const [uid, time] = data.split(','); // what client claims
-        const userEmail = (await get(child(ref(database), `users/${uid}/e`))).val(); // what server says
-        const timeUpdate = (await get(child(ref(database), `users/${uid}/t`))).val(); // what server says
-        if(+time === timeUpdate){
+        try {
+          // try to map userid to user metadata
+          const userEmail = (await get(child(ref(database), `users/${uid}/e`))).val(); // what server says
+          const timeUpdate = (await get(child(ref(database), `users/${uid}/t`))).val(); // what server says
+          if(userEmail === null || timeUpdate === null) return updateFeedback("Invalid code, this account does not exist");
+          if(+time !== timeUpdate) return updateFeedback("Invalid code (timestamp mismatch), ask for user to reload page");
+          // try to get user data
+          const userdataSnapshot = (await get(child(ref(database), `data/${userEmail.replaceAll('.','@')}`))).val(); // e, pii
+          if(userdataSnapshot === null) return updateFeedback("Invalid code (no data for user), user is not registered for the event");
           // its all good
-          updateFeedback(`Valid user data recieved ${userEmail} ${uid}`);
-        }else{
-          updateFeedback("Invalid code (timestamp mismatch), ask for user to reload page");
+          updateFeedback(`Valid user data recieved ${userEmail} ${uid} ${userdataSnapshot}`);
+          updatePeripheralData({
+            email: userEmail,
+            uid,
+            user: userdataSnapshot,
+          });
+        } catch (err){
+          updateFeedback(`Invalid code (no data for user), user is not registered\n${err}`);
         }
+
       });
       // connection.on("open", () => console.log(" >!!", connection.peer));
       // connection.on("close", () => console.log("<--<", connection.peer));
@@ -201,6 +235,9 @@ function loadReaderApplication(){
     });
   });
 
-  container.append(openReaderButton, peerReconnect);
+  container.append(openReaderButton, peerReconnect, peripheralDataStatus, readerDataStatus);
   document.body.append(container);
+
+  updatePeripheralData();
+  updateReaderData("12378");
 }

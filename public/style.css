@@ -3,9 +3,35 @@
     font-family: Poppins, sans-serif;
 }
 
+@keyframes flickerIn {
+    0%, 36%, 60%, 96%, 100%{
+        opacity: 1;
+        animation-timing-function: steps(1, end);
+    }
+    12%, 48%, 72% {
+        opacity: 0;
+        animation-timing-function: steps(1, end);
+    }
+}
+@keyframes flickerOut {
+    0%, 36%, 60%, 100%{
+        opacity: 0;
+        animation-timing-function: steps(1, end);
+    }
+    12%, 48% {
+        opacity: 1;
+        animation-timing-function: steps(1, end);
+    }
+}
+
 html, body {
     margin: 0;
     padding: 0;
+}
+#feedback {
+    position: absolute;
+    padding: 2em;
+    bottom: 0;
 }
 
 #login {
@@ -15,13 +41,33 @@ html, body {
     width: 100vw;
     height: 100vh;
     background: rgba(0, 0, 0, 0.1);
-    transition: all 0.2s ease-out;
 }
-#login:hover {
+button {
+    animation: 0.2s 1 normal forwards flickerIn;
+    transition: backgroundColor 0.2s ease-out;
+}
+button:hover {
     background: rgba(255, 255, 255, 0.1);
 }
-#login:active {
-    transform: scale(0.9);
+button:active {
+    animation: 0.2s 1 normal forwards flickerOut;
+}
+
+button, .statusBar {
+    padding: 1em;
+}
+.statusBar {
+    color: white;
+    display: inline-block;
+    border-radius: 5px;
+}
+.actionBar {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 2px;
+    padding-top: 1em;
 }
 
 #qrcode {
