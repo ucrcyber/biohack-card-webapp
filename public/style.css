@@ -36,15 +36,15 @@ html, body {
 
 #login {
     position: fixed;
-    left: 0;
-    top: 0;
-    width: 100vw;
-    height: 100vh;
+    left: 50%;
+    top: 50%;
     background: rgba(0, 0, 0, 0.1);
+    transform: translate(-50%,-50%);
 }
 button {
     animation: 0.2s 1 normal forwards flickerIn;
     transition: backgroundColor 0.2s ease-out;
+    border-radius: 5px;
 }
 button:hover {
     background: rgba(255, 255, 255, 0.1);
@@ -55,6 +55,7 @@ button:active {
 
 button, .statusBar {
     padding: 1em;
+    font-size: 1em;
 }
 .statusBar {
     color: white;
