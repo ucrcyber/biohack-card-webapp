@@ -123,6 +123,27 @@ function updatePeripheralData(data){
   peripheralData = data;
   updateLinkStatus();
 }
+function updateCardResult(data){
+  const existing = document.querySelector('div.slideIn.cardResult:not(.discard)');
+  if(existing){
+    existing.classList.add('discard');
+    existing.style.transform = 'translateX(1em)';
+    existing.style.animationName = existing.style.animationDelay = '';
+    setTimeout(() => existing.remove(), 1000);
+  }
+  if(data){
+    const div = document.createElement('div');
+    div.classList.add('slideIn', 'cardResult');
+    div.innerText = JSON.stringify(data);
+    document.body.append(div);
+
+    setTimeout(() => {
+      div.style.transform = 'translateY(0)';
+      div.style.animationName = 'flickerIn';
+      div.style.animationDelay = '0.1s';
+    }, 200);
+  }
+}
 function updateReaderData(data){
   const div = document.querySelector("#readerData");
   if(!readerData !== !data){
@@ -148,7 +169,8 @@ function updateReaderData(data){
         );
       }else{
         const userdata = (await get(child(ref(database), `data/${owner.replaceAll('.','@')}`))).val();
-        updateFeedback("CARD DATA\n" + Object.entries(userdata).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join('\n'));
+        updateCardResult(userdata);
+        // updateFeedback("CARD DATA\n" + Object.entries(userdata).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join('\n'));
       }
     });
   }
@@ -156,6 +178,7 @@ function updateReaderData(data){
   div.innerText = data ? "Card OK" : "no card scanned";
   readerData = data;
   updateLinkStatus();
+  if(!data) updateCardResult();
 }
 function updateLinkStatus(){
   const button = document.querySelector('#linkCards');

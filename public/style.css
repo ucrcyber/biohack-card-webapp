@@ -34,6 +34,7 @@
 html, body {
     margin: 0;
     padding: 0;
+    overflow: hidden;
 }
 #feedback {
     position: absolute;
@@ -50,7 +51,7 @@ html, body {
 }
 button {
     animation: 0.2s 1 normal both flickerIn;
-    transition: backgroundColor 0.2s ease-out;
+    transition: backgroundColor 0.2s cubic-bezier(0.0, 0.0, 0.2, 1);
     border-radius: 5px;
 }
 button:hover {
@@ -145,9 +146,25 @@ button, .statusBar {
 .floatUp {
     transform: translateY(-80%);
     opacity: 0.3;
-    transition: all 0.2s ease-out;
+    transition: all 0.2s cubic-bezier(0.0, 0.0, 0.2, 1);
 }
 .floatUp:hover {
     transform: translateY(0);
     opacity: 1;
+}
+
+.slideIn {
+    transform: translateY(120%);
+    animation: 0.2s 0s 1 normal both flickerOut;
+    transition: all 0.7s cubic-bezier(0.0, 0.0, 0.2, 1);
+}
+.cardResult {
+    position: absolute;
+    bottom: 1em;
+    right: 3em;
+    max-width: 50%;
+    overflow-wrap: anywhere;
+    border-top: 3px black solid;
+    border-radius: 10px;
+    background: linear-gradient(0deg, #0001, transparent);
 }
