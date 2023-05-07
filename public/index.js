@@ -167,7 +167,7 @@ function updateReaderData(data){
     replayAnimation(div);
     div.style.animationDelay = '0s';
   }
-  if(readerData !== data || data){ // different data?
+  if(readerData !== data && data){ // different data?
     console.log("NEW CARD!", data, registeredEvent);
     get(child(ref(database), `cards/${data}/e`)).then(async snapshot => {
       const owner = snapshot.val();
@@ -185,7 +185,7 @@ function updateReaderData(data){
         // race conditions are gone :sunglasses:
         set(child(ref(database), `data/${owner.replaceAll('.','@')}/a/${registeredEvent}`), increment(1));
         set(child(ref(database), `events/${registeredEvent}/c`), increment(1));
-      }{
+      }else{
         const userdata = (await get(child(ref(database), `data/${owner.replaceAll('.','@')}`))).val();
         updateCardResult(userdata);
         // updateFeedback("CARD DATA\n" + Object.entries(userdata).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join('\n'));
