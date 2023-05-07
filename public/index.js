@@ -154,7 +154,7 @@ async function updateCardResult(data){
     div.style.transform = 'translateY(0)';
     div.style.animationName = 'flickerIn';
     div.style.animationDelay = '0.1s';
-    for(const [eventId, eventCheckins] of Object.entries(data.a)){
+    for(const [eventId, eventCheckins] of Object.entries(data.a || {})){
       const counterElement = document.getElementById(`ct-${eventId}`);
       if(counterElement.innerText != eventCheckins) replayAnimation(counterElement);
       counterElement.innerText = eventCheckins;
