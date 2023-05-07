@@ -32,10 +32,13 @@ const qrcode = new QRCode(document.getElementById("qrcode"), {
   colorLight: "#fff",
   correctLevel: QRCode.CorrectLevel.H,
 });
+document.getElementById("qrcode").addEventListener('click', () => qrcodeDisplay());
 qrcodeDisplay();
 function qrcodeDisplay(code){
   console.log("qrUpdate", code);
-  document.getElementById("qrcode").style.display = code ? "flex" : "none";
+  const qrcodeElement = document.getElementById("qrcode");
+  qrcodeElement.style.display = code ? "flex" : "none";
+  qrcodeElement.style.zIndex = code ? 1 : -1;
   qrcode.makeCode(code || ""); // reset qrcode display
 }
 
