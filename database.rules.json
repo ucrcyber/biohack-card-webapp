@@ -56,6 +56,9 @@
         "d": { // description
           ".validate": "newData.isString() && newData.val().length <= 200",
         },
+        "c": { // count
+          ".validate": "newData.isNumber()", // maybe increment check?
+        },
         // only be able to set events as Operator
         ".read": "root.child('users').child(auth.uid).child('p').val() >= 1",
         ".write": "root.child('users').child(auth.uid).child('p').val() >= 1",

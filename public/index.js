@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.19.0/firebase-analytics.js";
-import { getDatabase, ref, get, set, update, push, child, onChildAdded, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.19.0/firebase-database.js";
+import { getDatabase, ref, get, set, update, push, child, onChildAdded, onValue, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/9.19.0/firebase-database.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.19.0/firebase-auth.js";
 
 const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
@@ -42,6 +42,12 @@ function qrcodeDisplay(code){
   qrcodeElement.style.display = code ? "flex" : "none";
   qrcodeElement.style.zIndex = code ? 1 : -1;
   qrcode.makeCode(code || ""); // reset qrcode display
+}
+
+function replayAnimation(htmlElement){
+  htmlElement.style.animation = 'none';
+  htmlElement.offsetHeight; /* trigger reflow */
+  htmlElement.style.animation = '';
 }
 
 document.querySelector('#login').addEventListener('click', async () => {
@@ -134,7 +140,10 @@ async function updateCardResult(data){
     sleep(1000).then(() => existing.remove());
   }
   
-  [...document.querySelectorAll('.event>.counter')].forEach(counterElement => counterElement.innerText = '0');
+  [...document.querySelectorAll('.event>.counter:not(.globalCounter)')].forEach(counterElement => {
+    counterElement.style.animationName = 'flickerOut';
+    counterElement.innerText = '0';
+  });
   if(data){
     const div = document.createElement('div');
     div.classList.add('slideIn', 'cardResult');
@@ -146,19 +155,19 @@ async function updateCardResult(data){
     div.style.animationName = 'flickerIn';
     div.style.animationDelay = '0.1s';
     for(const [eventId, eventCheckins] of Object.entries(data.a)){
-      document.getElementById(`ct-${eventId}`).innerText = eventCheckins;
+      const counterElement = document.getElementById(`ct-${eventId}`);
+      if(counterElement.innerText != eventCheckins) replayAnimation(counterElement);
+      counterElement.innerText = eventCheckins;
     }
   }
 }
 function updateReaderData(data){
   const div = document.querySelector("#readerData");
   if(!readerData !== !data){
-    div.style.animation = 'none';
-    div.offsetHeight; /* trigger reflow */
-    div.style.animation = '';
+    replayAnimation(div);
     div.style.animationDelay = '0s';
   }
-  if(readerData !== data && data){ // different data?
+  if(readerData !== data || data){ // different data?
     console.log("NEW CARD!", data, registeredEvent);
     get(child(ref(database), `cards/${data}/e`)).then(async snapshot => {
       const owner = snapshot.val();
@@ -168,12 +177,15 @@ function updateReaderData(data){
           c: owner,
           e: registeredEvent, // event id
         });
-        const visits = (await get(child(ref(database), `data/${owner.replaceAll('.','@')}/a/${registeredEvent}`))).val();
-        console.log(visits);
-        set(child(ref(database), `data/${owner.replaceAll('.','@')}/a/${registeredEvent}`), 1 + 
-          (visits || 0)
-        );
-      }else{
+        // const visits = (await get(child(ref(database), `data/${owner.replaceAll('.','@')}/a/${registeredEvent}`))).val();
+        // console.log(visits);
+        // set(child(ref(database), `data/${owner.replaceAll('.','@')}/a/${registeredEvent}`), 1 + 
+        //   (visits || 0)
+        // );
+        // race conditions are gone :sunglasses:
+        set(child(ref(database), `data/${owner.replaceAll('.','@')}/a/${registeredEvent}`), increment(1));
+        set(child(ref(database), `events/${registeredEvent}/c`), increment(1));
+      }{
         const userdata = (await get(child(ref(database), `data/${owner.replaceAll('.','@')}`))).val();
         updateCardResult(userdata);
         // updateFeedback("CARD DATA\n" + Object.entries(userdata).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join('\n'));
@@ -344,6 +356,14 @@ function loadReaderApplication(){
     const eventBar = document.createElement('div');
     eventBar.classList.add('event');
 
+    const globalCounterDiv = document.createElement('div');
+    // globalCounterDiv.id = `gct-${id}`;
+    globalCounterDiv.classList.add('counter', 'globalCounter');
+    onValue(child(ref(database), `events/${id}/c`), snapshot => {
+      replayAnimation(globalCounterDiv);
+      globalCounterDiv.innerText = `${snapshot.val() || 0}`;
+    }, console.error);
+
     const counterDiv = document.createElement('div');
     counterDiv.id = `ct-${id}`;
     counterDiv.classList.add('counter');
@@ -376,7 +396,7 @@ function loadReaderApplication(){
       container.classList.add('floatUp');
     });
 
-    eventBar.append(counterDiv, nameDiv, descriptionDiv, selectEventButton);
+    eventBar.append(globalCounterDiv, counterDiv, nameDiv, descriptionDiv, selectEventButton);
     eventContainer.append(eventBar);
 }, console.error);
 

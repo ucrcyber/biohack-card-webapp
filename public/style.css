@@ -115,9 +115,10 @@ button, .statusBar {
     overflow-y: auto;
 }
 .event > .counter {
-    width: 1em;
+    width: 2em;
     text-align: center;
     font-family: monospace;
+    animation: 0.2s 1 normal both flickerIn;
 }
 .event > div { 
     transition: background-color 0.2s ease-in-out;
