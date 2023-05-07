@@ -15,6 +15,9 @@
         "t": { // current time (of qr code generation)
           ".validate": "newData.val() === now",
         },
+        "a": { // activities
+          ".write": "root.child('users').child(auth.uid).child('p').val() >= 1",
+        },
         ".validate": "newData.hasChildren(['e', 't'])",
         ".read": "$user === auth.uid || root.child('users').child(auth.uid).child('p').val() >= 1",
         ".write": "$user === auth.uid",

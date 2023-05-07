@@ -22,7 +22,7 @@ const analytics = getAnalytics(app);
 const database = getDatabase(app);
 const auth = getAuth(app);
 
-let peripheralData, readerData;
+let peripheralData, readerData, registeredEvent, registeredEventElement;
 const provider = new GoogleAuthProvider();
 
 const qrcode = new QRCode(document.getElementById("qrcode"), {
@@ -122,11 +122,27 @@ function updatePeripheralData(data){
 }
 function updateReaderData(data){
   const div = document.querySelector("#readerData");
-  if(!peripheralData !== !data){
+  if(!readerData !== !data){
     div.style.animation = 'none';
     div.offsetHeight; /* trigger reflow */
     div.style.animation = '';
     div.style.animationDelay = '0s';
+  }
+  if(readerData !== data && data){ // different data?
+    console.log("NEW CARD!", data, registeredEvent);
+    if(registeredEvent){
+      get(child(ref(database), `cards/${data}/e`)).then(async snapshot => {
+        const owner = snapshot.val();
+        push(child(ref(database), `re`), {
+          t: serverTimestamp(),
+          c: owner,
+          e: registeredEvent, // event id
+        });
+        set(child(ref(database), `data/${owner.replaceAll('.','@')}/a/${registeredEvent}`), 1 + 
+          ((await get(child(ref(database), `data/${owner.replaceAll('.','@')}/a/${registeredEvent}`))).val() || 0)
+        );
+      });
+    }
   }
   div.style.background = data ? "darkgreen" : "darkred";
   div.innerText = data ? "Card OK" : "no card scanned";
@@ -142,8 +158,8 @@ function loadReaderApplication(){
   const container = document.createElement("div");
   container.classList.add('actionBar');
   const peerReconnect = document.createElement("button");
-  peerReconnect.innerText = "Reconnect";
-  peerReconnect.disabled = true;
+  peerReconnect.innerText = "QR Connect";
+  // peerReconnect.disabled = true; // require manual (usually its not required)
   const openReaderButton = document.createElement("button");
   openReaderButton.innerText = "Request Serial";
   openReaderButton.onclick = async () => {
@@ -202,6 +218,7 @@ function loadReaderApplication(){
   linkCardsButton.addEventListener('click', async () => {
     console.log("DATAS", peripheralData, readerData);
 
+    // TODO : handle reassigning an already assigned card
     update(child(ref(database), `cards/${readerData}`), { e: peripheralData.email });
     update(child(ref(database), `data/${peripheralData.emailAsKey}`), { card: readerData });
 
@@ -224,13 +241,13 @@ function loadReaderApplication(){
       alert("Serial API not found, make sure you are on a chromium based browser and are using https");
     }
 
-    qrcodeDisplay(`${window.location.origin}/?peer=${encodeURIComponent(id)}`);
+    // qrcodeDisplay(`${window.location.origin}/?peer=${encodeURIComponent(id)}`);
     peerReconnect.onclick = () => {
       qrcodeDisplay(`${window.location.origin}/?peer=${encodeURIComponent(id)}`);
       peerReconnect.disabled = true;
     };
     peer.on("connection", (connection) => {
-      console.log(qrcode);
+      // console.log(qrcode);
       qrcodeDisplay();
       peerReconnect.disabled = false;
       // Receive messages
@@ -268,9 +285,74 @@ function loadReaderApplication(){
     });
   });
 
-  container.append(openReaderButton, peerReconnect, peripheralDataStatus, readerDataStatus, linkCardsButton);
-  document.body.append(container);
+  const newEventButton = document.createElement('button');
+  newEventButton.innerText = "+ Event";
+  // newEventButton.style.position = 'absolute';
+  newEventButton.addEventListener('click', () => {
+    const payload = prompt("Name of new event? (at least 5 characters)");
+    if(payload?.length >= 5){
+      push(child(ref(database), `events`), {
+        n: payload,
+        d: "placeholder description (click to edit)",
+      });
+    }
+  });
 
+  const eventContainer = document.createElement('div');
+  eventContainer.classList.add('eventContainer');
+  onChildAdded(child(ref(database), `events`), (snapshot) => {
+    const id = snapshot.key;
+    const snapshotValue = snapshot.val();
+    let [name, description] = ["n", "d"].map(k => snapshotValue[k]);
+    const eventBar = document.createElement('div');
+    eventBar.classList.add('event');
+
+    const nameDiv = document.createElement('div');
+    nameDiv.classList.add('title');
+    onValue(child(ref(database), `events/${id}/n`), snapshot => nameDiv.innerText = `${name=snapshot.val()}`, console.error);
+    nameDiv.onclick = () => {
+      const payload = prompt(`Enter a new name for event ${name}`);
+      if(payload) update(child(ref(database), `events/${id}/n`), payload);
+    };
+
+    const descriptionDiv = document.createElement('div');
+    descriptionDiv.classList.add('description');
+    onValue(child(ref(database), `events/${id}/d`), snapshot => descriptionDiv.innerText = `${description=snapshot.val()}`, console.error);
+    descriptionDiv.onclick = () => {
+      const payload = prompt(`Enter a new description for event ${name}\nOld description: ${description}`);
+      if(payload) update(child(ref(database), `events/${id}/n`), payload);
+    };
+    const selectEventButton = document.createElement('button');
+    selectEventButton.innerText = 'Select';
+    selectEventButton.addEventListener('click', () => {
+      if(registeredEventElement) registeredEventElement.classList.remove('selected'); // use css psuedoselectors and pointer-events to disable selected element
+      registeredEventElement = eventBar;
+      registeredEventElement.classList.add('selected');
+      registeredEvent = id;
+
+      // if you ever select, you dont need to link cards anymore (probably)
+      container.classList.add('floatUp');
+    });
+
+    eventBar.append(nameDiv, descriptionDiv, selectEventButton);
+    eventContainer.append(eventBar);
+}, console.error);
+
+  container.append(openReaderButton, peerReconnect, peripheralDataStatus, readerDataStatus, linkCardsButton);
+  container.append(newEventButton);
+  document.body.append(container, eventContainer);
+
+  // for testing
+  peripheralDataStatus.onclick = () => updatePeripheralData({
+    email: "test@test.test",
+    emailAsKey: "test@test.test".replaceAll('.','@'),
+    uid: "testaccount",
+    user: {
+      "e": "test@test.test",
+      "pii": "datadata",
+    },
+  });
+  readerDataStatus.onclick = () => updateReaderData("testcardnumber");
   updatePeripheralData();
   updateReaderData("testcardnumber");
 }

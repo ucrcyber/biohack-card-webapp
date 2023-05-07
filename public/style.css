@@ -23,6 +23,13 @@
         animation-timing-function: steps(1, end);
     }
 }
+@keyframes horizontalShake { /* https://unused-css.com/blog/css-shake-animation/ -- i go make my own later */
+    0% { transform: translateX(0) }
+    25% { transform: translateX(5px) }
+    50% { transform: translateX(-5px) }
+    75% { transform: translateX(5px) }
+    100% { transform: translateX(0) }
+}
 
 html, body {
     margin: 0;
@@ -74,6 +81,56 @@ button, .statusBar {
     transition: backgroundColor 0.5s ease-in-out;
 }
 
+.eventContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    margin: 1em;
+    max-height: 80%;
+}
+.event {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 1em;
+    transition: background-color 0.2s ease-in-out;
+}
+.event:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+.event:hover > div {
+    background-color: rgba(0, 0, 0, 0.05);
+    border: 1px dashed black;
+}
+.event > .title {
+    width: 20%;
+    text-align: center;
+    font-weight: bold;
+}
+.event > .description {
+    width: 50%;
+    max-height: 4em;
+    overflow-y: auto;
+}
+.event > div { 
+    transition: background-color 0.2s ease-in-out;
+}
+.event > div:hover {
+    background-color: white;
+}
+.event > button {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+/* disabling the button for selected */
+.event.selected > button {
+    opacity: 0.3 !important;
+}
+.event.selected > button:active { /* hehe shaky shaky */
+    animation: 0.2s 1 normal both horizontalShake;
+}
+
 #qrcode {
     position: absolute;
     display: flex;
@@ -82,4 +139,14 @@ button, .statusBar {
     width: 100vw;
     height: 100vh;
     z-index: -1;
+}
+
+.floatUp {
+    transform: translateY(-80%);
+    opacity: 0.3;
+    transition: all 0.2s ease-out;
+}
+.floatUp:hover {
+    transform: translateY(0);
+    opacity: 1;
 }
