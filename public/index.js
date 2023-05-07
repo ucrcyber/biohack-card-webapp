@@ -133,19 +133,24 @@ function updateReaderData(data){
   }
   if(readerData !== data && data){ // different data?
     console.log("NEW CARD!", data, registeredEvent);
-    if(registeredEvent){
-      get(child(ref(database), `cards/${data}/e`)).then(async snapshot => {
-        const owner = snapshot.val();
+    get(child(ref(database), `cards/${data}/e`)).then(async snapshot => {
+      const owner = snapshot.val();
+      if(registeredEvent){
         push(child(ref(database), `re`), {
           t: serverTimestamp(),
           c: owner,
           e: registeredEvent, // event id
         });
+        const visits = (await get(child(ref(database), `data/${owner.replaceAll('.','@')}/a/${registeredEvent}`))).val();
+        console.log(visits);
         set(child(ref(database), `data/${owner.replaceAll('.','@')}/a/${registeredEvent}`), 1 + 
-          ((await get(child(ref(database), `data/${owner.replaceAll('.','@')}/a/${registeredEvent}`))).val() || 0)
+          (visits || 0)
         );
-      });
-    }
+      }else{
+        const userdata = (await get(child(ref(database), `data/${owner.replaceAll('.','@')}`))).val();
+        updateFeedback("CARD DATA\n" + Object.entries(userdata).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join('\n'));
+      }
+    });
   }
   div.style.background = data ? "darkgreen" : "darkred";
   div.innerText = data ? "Card OK" : "no card scanned";
@@ -341,8 +346,7 @@ function loadReaderApplication(){
     eventContainer.append(eventBar);
 }, console.error);
 
-  container.append(openReaderButton, peerReconnect, peripheralDataStatus, readerDataStatus, linkCardsButton);
-  container.append(newEventButton);
+  container.append(openReaderButton, peerReconnect, newEventButton, peripheralDataStatus, readerDataStatus, linkCardsButton);
   document.body.append(container, eventContainer);
 
   // for testing
