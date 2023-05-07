@@ -102,7 +102,7 @@ button, .statusBar {
 }
 .event:hover > div {
     background-color: rgba(0, 0, 0, 0.05);
-    border: 1px dashed black;
+    border-bottom: 2px dashed black;
 }
 .event > .title {
     width: 20%;
@@ -113,6 +113,11 @@ button, .statusBar {
     width: 50%;
     max-height: 4em;
     overflow-y: auto;
+}
+.event > .counter {
+    width: 1em;
+    text-align: center;
+    font-family: monospace;
 }
 .event > div { 
     transition: background-color 0.2s ease-in-out;

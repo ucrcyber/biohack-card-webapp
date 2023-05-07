@@ -3,6 +3,8 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.19.0/firebase
 import { getDatabase, ref, get, set, update, push, child, onChildAdded, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.19.0/firebase-database.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.19.0/firebase-auth.js";
 
+const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -123,25 +125,29 @@ function updatePeripheralData(data){
   peripheralData = data;
   updateLinkStatus();
 }
-function updateCardResult(data){
+async function updateCardResult(data){
   const existing = document.querySelector('div.slideIn.cardResult:not(.discard)');
   if(existing){
     existing.classList.add('discard');
     existing.style.transform = 'translateX(1em)';
     existing.style.animationName = existing.style.animationDelay = '';
-    setTimeout(() => existing.remove(), 1000);
+    sleep(1000).then(() => existing.remove());
   }
+  
+  [...document.querySelectorAll('.event>.counter')].forEach(counterElement => counterElement.innerText = '0');
   if(data){
     const div = document.createElement('div');
     div.classList.add('slideIn', 'cardResult');
     div.innerText = JSON.stringify(data);
     document.body.append(div);
 
-    setTimeout(() => {
-      div.style.transform = 'translateY(0)';
-      div.style.animationName = 'flickerIn';
-      div.style.animationDelay = '0.1s';
-    }, 200);
+    await sleep(200);
+    div.style.transform = 'translateY(0)';
+    div.style.animationName = 'flickerIn';
+    div.style.animationDelay = '0.1s';
+    for(const [eventId, eventCheckins] of Object.entries(data.a)){
+      document.getElementById(`ct-${eventId}`).innerText = eventCheckins;
+    }
   }
 }
 function updateReaderData(data){
@@ -338,6 +344,11 @@ function loadReaderApplication(){
     const eventBar = document.createElement('div');
     eventBar.classList.add('event');
 
+    const counterDiv = document.createElement('div');
+    counterDiv.id = `ct-${id}`;
+    counterDiv.classList.add('counter');
+    counterDiv.innerText = "0";
+
     const nameDiv = document.createElement('div');
     nameDiv.classList.add('title');
     onValue(child(ref(database), `events/${id}/n`), snapshot => nameDiv.innerText = `${name=snapshot.val()}`, console.error);
@@ -365,7 +376,7 @@ function loadReaderApplication(){
       container.classList.add('floatUp');
     });
 
-    eventBar.append(nameDiv, descriptionDiv, selectEventButton);
+    eventBar.append(counterDiv, nameDiv, descriptionDiv, selectEventButton);
     eventContainer.append(eventBar);
 }, console.error);
 
