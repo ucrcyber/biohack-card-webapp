@@ -12,6 +12,7 @@ const SoundFileAliases = {
   "phone-scan-pass": "Quest Notification 1.mp3",
   "phone-scan-fail": "Notification 4.mp3",
   "button-onclick": "Select.mp3",
+  "button-onclick-disabled": "Wrong Answer.mp3",
   "change-desc": "Menu Click 1.mp3",
   "select-event": "Menu Open 2.mp3",
   "link-card": "Sparkle Swoosh 1.mp3",
@@ -26,8 +27,10 @@ function setupSounds(){
     });  
   }
   document.body.addEventListener('click', (e) => {
+    console.log(e.target, e.target.getAttribute('disabled'));
     if(e.target.tagName === "BUTTON"){
-      Sounds.buttonOnclick.play();
+      if(!e.target.getAttribute('disabled') && !e.target.classList.contains('disabled')) Sounds['buttonOnclick'].play();
+      else Sounds['buttonOnclickDisabled'].play();
     }
   });
   document.body.removeEventListener('click', setupSounds);
@@ -197,9 +200,9 @@ function updateReaderData(data){
   if(!readerData !== !data){
     replayAnimation(div);
     div.style.animationDelay = '0s';
-    Sounds['cardScan']?.play();
   }
   if(readerData !== data && data){ // different data?
+    Sounds['cardScan']?.play();
     console.log("NEW CARD!", data, registeredEvent);
     get(child(ref(database), `cards/${data}/e`)).then(async snapshot => {
       const owner = snapshot.val();
@@ -232,7 +235,8 @@ function updateReaderData(data){
 }
 function updateLinkStatus(){
   const button = document.querySelector('#linkCards');
-  button.disabled = !(readerData && peripheralData);
+  if(!(readerData && peripheralData)) button.classList.add('disabled');
+  else button.classList.remove('disabled');
 }
 function loadReaderApplication(){
   let currentCard = null;
@@ -246,12 +250,13 @@ function loadReaderApplication(){
   openReaderButton.onclick = async () => {
     // open port (do it once and you can refresh as many times as you want)
     // reading something
+    if(openReaderButton.classList.contains('disabled')) return;
     try {
       const decoder = new TextDecoder();
       const port = await navigator.serial.requestPort();
       await port.open({ baudRate: 9600 });
 
-      openReaderButton.disabled = true;
+      openReaderButton.classList.add('disabled'); // openReaderButton.disabled = true;
 
       let o = "";
       if (port.readable) {
@@ -285,7 +290,7 @@ function loadReaderApplication(){
         reader.releaseLock();
         port.close();
         console.log(o);
-        openReaderButton.disabled = false;
+        openReaderButton.classList.remove('disabled'); // openReaderButton.disabled = false;
       }
     }catch(err){
       updateFeedback("failed to open port " + err);
@@ -295,8 +300,10 @@ function loadReaderApplication(){
   const linkCardsButton = document.createElement("button");
   linkCardsButton.id = "linkCards";
   linkCardsButton.innerText = "Link to card";
-  linkCardsButton.disabled = true;
+  linkCardsButton.classList.add('disabled'); // linkCardsButton.disabled = true;
   linkCardsButton.addEventListener('click', async () => {
+    if(linkCardsButton.classList.contains('disabled')) return;
+
     console.log("DATAS", peripheralData, readerData);
 
     // TODO : handle reassigning an already assigned card
@@ -325,13 +332,14 @@ function loadReaderApplication(){
 
     // qrcodeDisplay(`${window.location.origin}/?peer=${encodeURIComponent(id)}`);
     peerReconnect.onclick = () => {
+      if(peerReconnect.classList.contains('disabled')) return;
       qrcodeDisplay(`${window.location.origin}/?peer=${encodeURIComponent(id)}`);
-      peerReconnect.disabled = true;
+      peerReconnect.classList.add('disabled');
     };
     peer.on("connection", (connection) => {
       // console.log(qrcode);
       qrcodeDisplay();
-      peerReconnect.disabled = false;
+      peerReconnect.classList.remove('disabled');
       // Receive messages
       connection.on("data", async (data) => {
         console.log("Received", data);
@@ -424,10 +432,15 @@ function loadReaderApplication(){
     };
     const selectEventButton = document.createElement('button');
     selectEventButton.innerText = 'Select';
-    selectEventButton.addEventListener('click', () => {
-      if(registeredEventElement) registeredEventElement.classList.remove('selected'); // use css psuedoselectors and pointer-events to disable selected element
+    selectEventButton.addEventListener('click', async () => {
+      await sleep(10); // let sound for Enabled button fire first
+      if(registeredEventElement){
+        document.querySelector('div.event.selected > button.disabled').classList.remove('disabled');
+        registeredEventElement.classList.remove('selected');
+      }
       registeredEventElement = eventBar;
       registeredEventElement.classList.add('selected');
+      selectEventButton.classList.add('disabled');
       registeredEvent = id;
       Sounds['selectEvent']?.play();
 

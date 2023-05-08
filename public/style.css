@@ -57,8 +57,11 @@ button {
 button:hover {
     background: rgba(255, 255, 255, 0.1);
 }
-button:active {
+button:not(.disabled):active {
     animation: 0.2s 1 normal both flickerOut;
+}
+button.disabled {
+    opacity: 0.3 !important;
 }
 
 button, .statusBar {
@@ -133,8 +136,12 @@ button, .statusBar {
 /* disabling the button for selected */
 .event.selected > button {
     opacity: 0.3 !important;
+    transform: translate(-10px); /* add this */
 }
-.event.selected > button:active { /* hehe shaky shaky */
+.event.selected {
+    border-right: 4px solid bisque;
+}
+.event.selected > button:active, button.disabled:active { /* hehe shaky shaky */
     animation: 0.2s 1 normal both horizontalShake;
 }
 
