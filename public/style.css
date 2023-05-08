@@ -187,10 +187,11 @@ button, .statusBar {
     right: 3em;
     max-width: 50%;
     overflow-wrap: anywhere;
-    border-top: 1px #0001 solid;
-    border-bottom: 3px black solid;
+    /* border-top: 1px #0001 solid; */
+    /* border-bottom: 3px black solid; */
     border-radius: 10px;
     background: lightyellow; /*linear-gradient(0deg, #0001, transparent 30%);*/
+    filter: drop-shadow(0px 3px 2px black);
 }
 .cardResult > .bar {
     display: flex;
