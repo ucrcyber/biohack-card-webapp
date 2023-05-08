@@ -52,16 +52,26 @@ html, body {
     position: fixed;
     left: 50%;
     top: 50%;
-    background: rgba(0, 0, 0, 0.1);
+    /* background: rgba(0, 0, 0, 0.1); */
     transform: translate(-50%,-50%);
 }
 button {
+    background-color: white;
     animation: 0.2s 1 normal both flickerIn;
-    transition: backgroundColor 0.2s var(--ease-out);
+    border: none;
     border-radius: 5px;
+    transform: translateY(-2px);
+    filter: drop-shadow(0px 2px 2px black);
+    transition: backgroundColor 0.2s var(--ease-out), transform 0.4s var(--ease-out), filter 0.4s var(--ease-out);
 }
 button:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background-color: #EEE;
+    transform: translateY(-1px);
+    filter: drop-shadow(0px 1px 1px black);
+}
+button:active, button.disabled, button:disabled {
+    transform: none;
+    filter: none;
 }
 button:not(.disabled):active {
     animation: 0.2s 1 normal both flickerOut;
@@ -86,7 +96,7 @@ button, .statusBar {
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    gap: 2px;
+    gap: 5px;
     padding-top: 1em;
     /* transition: backgroundColor 0.5s var(--ease-in-out); */
 }
@@ -145,7 +155,7 @@ button, .statusBar {
 /* disabling the button for selected */
 .event.selected > button {
     opacity: 0.3 !important;
-    transform: translate(-10px); /* add this */
+    /* transform: translate(-10px); */ /* the disabled indicator is a lot more obvious so no need to shift it*/
 }
 .event.selected {
     border-right: 4px solid bisque;
