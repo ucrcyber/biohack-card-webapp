@@ -5,6 +5,34 @@ import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstati
 
 const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
+const SoundFileAliases = {
+  "popup": "Menu Open 3.mp3",
+  "popup-away": "Menu Close 2.mp3",
+  "card-scan": "Quest Notification 2.mp3",
+  "phone-scan-pass": "Quest Notification 1.mp3",
+  "phone-scan-fail": "Notification 4.mp3",
+  "button-onclick": "Select.mp3",
+  "change-desc": "Menu Click 1.mp3",
+  "select-event": "Menu Open 2.mp3",
+  "link-card": "Sparkle Swoosh 1.mp3",
+};
+const Sounds = {};
+document.body.addEventListener('click', setupSounds);
+function setupSounds(){
+  if(Object.keys(Sounds) > 0) return;
+  for(const [k, v] of Object.entries(SoundFileAliases)){
+    Sounds[k] = Sounds[k.replace(/-([a-z])/g, (a,g1) => g1.toUpperCase())] = new Howl({
+      src: [`sfx/${v}`],
+    });  
+  }
+  document.body.addEventListener('click', (e) => {
+    if(e.target.tagName === "BUTTON"){
+      Sounds.buttonOnclick.play();
+    }
+  });
+  document.body.removeEventListener('click', setupSounds);
+}
+
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -134,9 +162,11 @@ function updatePeripheralData(data){
 async function updateCardResult(data){
   const existing = document.querySelector('div.slideIn.cardResult:not(.discard)');
   if(existing){
+    await sleep(200);
     existing.classList.add('discard');
     existing.style.transform = 'translateX(1em)';
     existing.style.animationName = existing.style.animationDelay = '';
+    Sounds['popupAway']?.play();
     sleep(1000).then(() => existing.remove());
   }
   
@@ -150,7 +180,8 @@ async function updateCardResult(data){
     div.innerText = JSON.stringify(data);
     document.body.append(div);
 
-    await sleep(200);
+    await sleep(500);
+    Sounds['popup']?.play();
     div.style.transform = 'translateY(0)';
     div.style.animationName = 'flickerIn';
     div.style.animationDelay = '0.1s';
@@ -166,6 +197,7 @@ function updateReaderData(data){
   if(!readerData !== !data){
     replayAnimation(div);
     div.style.animationDelay = '0s';
+    Sounds['cardScan']?.play();
   }
   if(readerData !== data && data){ // different data?
     console.log("NEW CARD!", data, registeredEvent);
@@ -270,6 +302,7 @@ function loadReaderApplication(){
     // TODO : handle reassigning an already assigned card
     update(child(ref(database), `cards/${readerData}`), { e: peripheralData.email });
     update(child(ref(database), `data/${peripheralData.emailAsKey}`), { card: readerData });
+    Sounds['linkCard']?.play();
 
     updatePeripheralData();
     updateReaderData();
@@ -306,6 +339,7 @@ function loadReaderApplication(){
         connection.close();
         
         const [uid, time] = data.split(','); // what client claims
+        let validQrCode = false;
         try {
           // try to map userid to user metadata
           const userEmail = (await get(child(ref(database), `users/${uid}/e`))).val(); // what server says
@@ -316,6 +350,7 @@ function loadReaderApplication(){
           const userdataSnapshot = (await get(child(ref(database), `data/${userEmail.replaceAll('.','@')}`))).val(); // e, pii
           if(userdataSnapshot === null) return updateFeedback("Invalid code (no data for user), user is not registered for the event");
           // its all good
+          validQrCode = true;
           updateFeedback(`Valid user data recieved ${userEmail} ${uid} ${userdataSnapshot}`);
           updatePeripheralData({
             email: userEmail,
@@ -326,7 +361,8 @@ function loadReaderApplication(){
         } catch (err){
           updateFeedback(`Invalid code (no data for user), user is not registered\n${err}`);
         }
-
+        if(validQrCode) Sounds['phoneScanPass']?.play();
+        else Sounds['phoneScanFail']?.play();
       });
       // connection.on("open", () => console.log(" >!!", connection.peer));
       // connection.on("close", () => console.log("<--<", connection.peer));
@@ -373,6 +409,7 @@ function loadReaderApplication(){
     nameDiv.classList.add('title');
     onValue(child(ref(database), `events/${id}/n`), snapshot => nameDiv.innerText = `${name=snapshot.val()}`, console.error);
     nameDiv.onclick = () => {
+      Sounds['changeDesc']?.play();
       const payload = prompt(`Enter a new name for event ${name}`);
       if(payload) update(child(ref(database), `events/${id}/n`), payload);
     };
@@ -381,6 +418,7 @@ function loadReaderApplication(){
     descriptionDiv.classList.add('description');
     onValue(child(ref(database), `events/${id}/d`), snapshot => descriptionDiv.innerText = `${description=snapshot.val()}`, console.error);
     descriptionDiv.onclick = () => {
+      Sounds['changeDesc']?.play();
       const payload = prompt(`Enter a new description for event ${name}\nOld description: ${description}`);
       if(payload) update(child(ref(database), `events/${id}/n`), payload);
     };
@@ -391,6 +429,7 @@ function loadReaderApplication(){
       registeredEventElement = eventBar;
       registeredEventElement.classList.add('selected');
       registeredEvent = id;
+      Sounds['selectEvent']?.play();
 
       // if you ever select, you dont need to link cards anymore (probably)
       container.classList.add('floatUp');
