@@ -138,7 +138,7 @@ button, .statusBar {
 .event > button {
     padding-top: 0;
     padding-bottom: 0;
-    transition: all 0.2s var(--ease-in-out);
+    transition: all 0.2s var(--ease-out);
 }
 /* disabling the button for selected */
 .event.selected > button {

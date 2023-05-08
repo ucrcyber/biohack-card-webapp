@@ -435,8 +435,10 @@ function loadReaderApplication(){
     selectEventButton.addEventListener('click', async () => {
       await sleep(10); // let sound for Enabled button fire first
       if(registeredEventElement){
-        document.querySelector('div.event.selected > button.disabled').classList.remove('disabled');
+        const registeredEventButton = document.querySelector('div.event.selected > button.disabled');
+        registeredEventButton.classList.remove('disabled');
         registeredEventElement.classList.remove('selected');
+        replayAnimation(registeredEventButton);
       }
       registeredEventElement = eventBar;
       registeredEventElement.classList.add('selected');
