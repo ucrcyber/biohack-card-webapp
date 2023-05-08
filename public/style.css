@@ -3,6 +3,12 @@
     font-family: Poppins, sans-serif;
 }
 
+:root {
+    --ease-out: cubic-bezier(0.0, 0.0, 0.2, 1);
+    --ease-in-out: cubic-bezier(0.4, 0.0, 0.2, 1);
+    --ease-in: cubic-bezier(0.4, 0.0, 1, 1);
+}
+
 @keyframes flickerIn {
     36%, 60%, 96%, 100%{
         opacity: 1;
@@ -51,7 +57,7 @@ html, body {
 }
 button {
     animation: 0.2s 1 normal both flickerIn;
-    transition: backgroundColor 0.2s cubic-bezier(0.0, 0.0, 0.2, 1);
+    transition: backgroundColor 0.2s var(--ease-out);
     border-radius: 5px;
 }
 button:hover {
@@ -82,7 +88,7 @@ button, .statusBar {
     align-items: center;
     gap: 2px;
     padding-top: 1em;
-    transition: backgroundColor 0.5s ease-in-out;
+    transition: backgroundColor 0.5s var(--ease-in-out);
 }
 
 .eventContainer {
@@ -98,7 +104,7 @@ button, .statusBar {
     justify-content: center;
     align-items: center;
     gap: 1em;
-    transition: background-color 0.2s ease-in-out;
+    transition: background-color 0.2s var(--ease-in-out);
 }
 .event:hover {
     background-color: rgba(0, 0, 0, 0.05);
@@ -124,7 +130,7 @@ button, .statusBar {
     animation: 0.2s 1 normal both flickerIn;
 }
 .event > div { 
-    transition: background-color 0.2s ease-in-out;
+    transition: background-color 0.2s var(--ease-in-out);
 }
 .event > div:hover {
     background-color: white;
@@ -132,6 +138,7 @@ button, .statusBar {
 .event > button {
     padding-top: 0;
     padding-bottom: 0;
+    transition: all 0.2s var(--ease-in-out);
 }
 /* disabling the button for selected */
 .event.selected > button {
@@ -159,7 +166,7 @@ button, .statusBar {
 .floatUp {
     transform: translateY(-80%);
     opacity: 0.3;
-    transition: all 0.2s cubic-bezier(0.0, 0.0, 0.2, 1);
+    transition: all 0.2s var(--ease-out);
 }
 .floatUp:hover {
     transform: translateY(0);
@@ -169,7 +176,7 @@ button, .statusBar {
 .slideIn {
     transform: translateY(120%);
     animation: 0.2s 0s 1 normal both flickerOut;
-    transition: all 0.7s cubic-bezier(0.0, 0.0, 0.2, 1);
+    transition: all 0.7s var(--ease-out);
 }
 .cardResult {
     position: absolute;
