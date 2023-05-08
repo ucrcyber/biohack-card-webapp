@@ -88,7 +88,7 @@ button, .statusBar {
     align-items: center;
     gap: 2px;
     padding-top: 1em;
-    transition: backgroundColor 0.5s var(--ease-in-out);
+    /* transition: backgroundColor 0.5s var(--ease-in-out); */
 }
 
 .eventContainer {
