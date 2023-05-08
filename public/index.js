@@ -484,5 +484,5 @@ function loadReaderApplication(){
   });
   readerDataStatus.onclick = () => updateReaderData("testcardnumber");
   updatePeripheralData();
-  updateReaderData("testcardnumber");
+  updateReaderData();
 }
