@@ -295,7 +295,7 @@ function loadReaderApplication(){
             for(let line of lines){ // parse lines
               if(line.startsWith("CARD ID: ")){
                 const matchResult = line.match(/[0-9]+/);
-                if(matchResult && matchResult[0]) currentCard = (matchResult[0]);
+                if(matchResult && matchResult[0]) updateReaderData(matchResult[0]);
               }
             }
           }
