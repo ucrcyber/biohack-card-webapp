@@ -24,6 +24,8 @@ function setupSounds(){
   for(const [k, v] of Object.entries(SoundFileAliases)){
     Sounds[k] = Sounds[k.replace(/-([a-z])/g, (a,g1) => g1.toUpperCase())] = new Howl({
       src: [`sfx/${v}`],
+      // onload: () => console.log("finish loading", v),
+      // onloaderror: (i, a) => console.error("error loading", v, i, a),
     });  
   }
   document.body.addEventListener('click', (e) => {
@@ -354,7 +356,8 @@ function loadReaderApplication(){
     }
 
     // qrcodeDisplay(`${window.location.origin}/?peer=${encodeURIComponent(id)}`);
-    peerReconnect.onclick = () => {
+    peerReconnect.onclick = async () => {
+      await sleep(10);
       if(peerReconnect.classList.contains('disabled')) return;
       qrcodeDisplay(`${window.location.origin}/?peer=${encodeURIComponent(id)}`);
       peerReconnect.classList.add('disabled');
@@ -404,7 +407,8 @@ function loadReaderApplication(){
   const newEventButton = document.createElement('button');
   newEventButton.innerText = "+ Event";
   // newEventButton.style.position = 'absolute';
-  newEventButton.addEventListener('click', () => {
+  newEventButton.addEventListener('click', async () => {
+    await sleep(10);
     const payload = prompt("Name of new event? (at least 5 characters)");
     if(payload?.length >= 5){
       push(child(ref(database), `events`), {
@@ -437,19 +441,21 @@ function loadReaderApplication(){
     counterDiv.innerText = "0";
 
     const nameDiv = document.createElement('div');
-    nameDiv.classList.add('title');
+    nameDiv.classList.add('title', 'customSuccessSfx');
     onValue(child(ref(database), `events/${id}/n`), snapshot => nameDiv.innerText = `${name=snapshot.val()}`, console.error);
-    nameDiv.onclick = () => {
+    nameDiv.onclick = async () => {
       Sounds['changeDesc']?.play();
+      await sleep(10); // wait for sound to start playing first
       const payload = prompt(`Enter a new name for event ${name}`);
       if(payload) update(child(ref(database), `events/${id}/n`), payload);
     };
 
     const descriptionDiv = document.createElement('div');
-    descriptionDiv.classList.add('description');
+    descriptionDiv.classList.add('description', 'customSuccessSfx');
     onValue(child(ref(database), `events/${id}/d`), snapshot => descriptionDiv.innerText = `${description=snapshot.val()}`, console.error);
-    descriptionDiv.onclick = () => {
+    descriptionDiv.onclick = async () => {
       Sounds['changeDesc']?.play();
+      await sleep(10); // wait for sound to start playing first
       const payload = prompt(`Enter a new description for event ${name}\nOld description: ${description}`);
       if(payload) update(child(ref(database), `events/${id}/n`), payload);
     };
@@ -468,7 +474,8 @@ function loadReaderApplication(){
       registeredEventElement.classList.add('selected');
       selectEventButton.classList.add('disabled');
       registeredEvent = id;
-      Sounds['selectEvent']?.play();
+      Sounds['selectEvent'].play();
+      console.log("halp", Sounds['selectEvent']);
 
       // if you ever select, you dont need to link cards anymore (probably)
       container.classList.add('floatUp');
