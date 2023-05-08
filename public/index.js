@@ -27,10 +27,18 @@ function setupSounds(){
     });  
   }
   document.body.addEventListener('click', (e) => {
-    console.log(e.target, e.target.getAttribute('disabled'));
+    // console.log(e.target, e.target.getAttribute('disabled'));
+    const { classList } = e.target;
     if(e.target.tagName === "BUTTON"){
-      if(!e.target.getAttribute('disabled') && !e.target.classList.contains('disabled')) Sounds['buttonOnclick'].play();
-      else Sounds['buttonOnclickDisabled'].play();
+      if(!e.target.getAttribute('disabled') && !e.target.classList.contains('disabled')){
+        if(!e.target.classList.contains('customSuccessSfx')){
+          Sounds['buttonOnclick'].play();
+        }
+      } else {
+        if(!e.target.classList.contains('customFailSfx')){
+          Sounds['buttonOnclickDisabled'].play();
+        }
+      }
     }
   });
   document.body.removeEventListener('click', setupSounds);
@@ -315,9 +323,9 @@ function loadReaderApplication(){
   const linkCardsButton = document.createElement("button");
   linkCardsButton.id = "linkCards";
   linkCardsButton.innerText = "Link to card";
-  linkCardsButton.classList.add('disabled'); // linkCardsButton.disabled = true;
+  linkCardsButton.classList.add('disabled', 'customSuccessSfx', 'customFailSfx'); // linkCardsButton.disabled = true;
   linkCardsButton.addEventListener('click', async () => {
-    if(linkCardsButton.classList.contains('disabled')) return;
+    if(linkCardsButton.classList.contains('disabled')) return Sounds['button-onclick-disabled'].play();
 
     console.log("DATAS", peripheralData, readerData);
 
@@ -447,8 +455,9 @@ function loadReaderApplication(){
     };
     const selectEventButton = document.createElement('button');
     selectEventButton.innerText = 'Select';
+    selectEventButton.classList.add('customSuccessSfx', 'customFailSfx');
     selectEventButton.addEventListener('click', async () => {
-      await sleep(10); // let sound for Enabled button fire first
+      if(selectEventButton.classList.contains('disabled')) return Sounds['button-onclick-disabled'].play();
       if(registeredEventElement){
         const registeredEventButton = document.querySelector('div.event.selected > button.disabled');
         registeredEventButton.classList.remove('disabled');
