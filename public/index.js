@@ -165,7 +165,7 @@ function updatePeripheralData(data){
 async function updateCardResult(data){
   const existing = document.querySelector('div.slideIn.cardResult:not(.discard)');
   if(existing){
-    await sleep(200);
+    await sleep(200); // stagger result update to let click sfx finish before starting next action
     existing.classList.add('discard');
     existing.style.transform = 'translateX(1em)';
     existing.style.animationName = existing.style.animationDelay = '';
@@ -180,10 +180,25 @@ async function updateCardResult(data){
   if(data){
     const div = document.createElement('div');
     div.classList.add('slideIn', 'cardResult');
-    div.innerText = JSON.stringify(data);
+    // div.innerText = JSON.stringify(data);
+    const userData = JSON.parse(data.pii) || ["unknown", "-", "-"];
+    const userDataLabels = ['Name', 'Tshirt Size', 'Dietary Restrictions'];
+    for(let k in userDataLabels){
+      const descriptorBar = document.createElement('div');
+      descriptorBar.classList.add('bar');
+      const labelDiv = document.createElement('div');
+      labelDiv.classList.add('title');
+      labelDiv.innerText = userDataLabels[k];
+      const dataDiv = document.createElement('div');
+      dataDiv.classList.add('description');
+      dataDiv.innerText = userData[k];
+      descriptorBar.append(labelDiv, dataDiv);
+      div.append(descriptorBar);
+    }
+
     document.body.append(div);
 
-    await sleep(500);
+    await sleep(500); // wait for the first popup to leave, and also stagger after initial interaction for sfx to finish
     Sounds['popup']?.play();
     div.style.transform = 'translateY(0)';
     div.style.animationName = 'flickerIn';

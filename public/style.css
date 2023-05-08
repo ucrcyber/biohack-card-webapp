@@ -181,12 +181,33 @@ button, .statusBar {
     transition: all 0.7s var(--ease-out);
 }
 .cardResult {
+    padding: 1em;
     position: absolute;
     bottom: 1em;
     right: 3em;
     max-width: 50%;
     overflow-wrap: anywhere;
-    border-top: 3px black solid;
+    border-top: 1px #0001 solid;
+    border-bottom: 3px black solid;
     border-radius: 10px;
-    background: linear-gradient(0deg, #0001, transparent);
+    background: lightyellow; /*linear-gradient(0deg, #0001, transparent 30%);*/
+}
+.cardResult > .bar {
+    display: flex;
+    justify-content: space-around;
+    gap: 1em;
+}
+.cardResult .bar:not(:last-child) {
+    border-bottom: 1px dashed;
+}
+.cardResult > .bar > .title {
+    color: #0004;
+    font-weight: bold;
+    text-align: right;
+    width: 8em;
+}
+.cardResult > .bar > .description {
+    color: black;
+    text-align: left;
+    width: 12em;
 }
