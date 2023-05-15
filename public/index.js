@@ -172,8 +172,17 @@ function updatePeripheralData(data){
   div.innerText = data ? "User OK" : "no user";
   peripheralData = data;
   updateLinkStatus();
+  if(peripheralData && peripheralData.emailAsKey){
+    get(child(ref(database), `data/${peripheralData.emailAsKey}/card`)).then(async snapshot => {
+      console.log('card of user', snapshot.val());
+      div.style.background = "darkgoldenrod";
+      div.innerText = "User HAS_CARD";
+      updateFeedback("[WARN] This user has already been assigned a card");
+    });
+  }
 }
-async function updateCardResult(data, {suppressSound}){
+async function updateCardResult(data, opts={}){
+  const suppressSound = opts?.suppressSound;
   const existing = document.querySelector('div.slideIn.cardResult:not(.discard)');
   if(existing){
     await sleep(200); // stagger result update to let click sfx finish before starting next action
@@ -227,10 +236,15 @@ function updateReaderData(data){
     replayAnimation(div);
     div.style.animationDelay = '0s';
   }
+  div.style.background = data ? "darkgreen" : "darkred";
+  div.innerText = data ? "Card OK" : "no card scanned";
   if(readerData !== data && data){ // different data?
     Sounds[registeredEvent ? 'cardScanBeep' : 'cardScan']?.play();
     console.log("NEW CARD!", data, registeredEvent);
     get(child(ref(database), `cards/${data}/e`)).then(async snapshot => {
+      div.style.background = "darkgoldenrod";
+      div.innerText = "Card IN_USE";
+      updateFeedback("[WARN] This card is already in use by another person!");
       const owner = snapshot.val();
       if(registeredEvent){
         push(child(ref(database), `re`), {
@@ -252,8 +266,6 @@ function updateReaderData(data){
       // updateFeedback("CARD DATA\n" + Object.entries(userdata).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join('\n'));
     });
   }
-  div.style.background = data ? "darkgreen" : "darkred";
-  div.innerText = data ? "Card OK" : "no card scanned";
   readerData = data;
   updateLinkStatus();
   if(!data) updateCardResult();
