@@ -9,6 +9,7 @@ const SoundFileAliases = {
   "popup": "Menu Open 3.mp3",
   "popup-away": "Menu Close 2.mp3",
   "card-scan": "Quest Notification 2.mp3",
+  "card-scan-beep": "beep.mp3",
   "phone-scan-pass": "Quest Notification 1.mp3",
   "phone-scan-fail": "Notification 4.mp3",
   "button-onclick": "Select.mp3",
@@ -172,14 +173,14 @@ function updatePeripheralData(data){
   peripheralData = data;
   updateLinkStatus();
 }
-async function updateCardResult(data){
+async function updateCardResult(data, {suppressSound}){
   const existing = document.querySelector('div.slideIn.cardResult:not(.discard)');
   if(existing){
     await sleep(200); // stagger result update to let click sfx finish before starting next action
     existing.classList.add('discard');
     existing.style.transform = 'translateX(1em)';
     existing.style.animationName = existing.style.animationDelay = '';
-    Sounds['popupAway']?.play();
+    if(!suppressSound) Sounds['popupAway']?.play();
     sleep(1000).then(() => existing.remove());
   }
   
@@ -209,7 +210,7 @@ async function updateCardResult(data){
     document.body.append(div);
 
     await sleep(500); // wait for the first popup to leave, and also stagger after initial interaction for sfx to finish
-    Sounds['popup']?.play();
+    if(!suppressSound) Sounds['popup']?.play();
     div.style.transform = 'translateY(0)';
     div.style.animationName = 'flickerIn';
     div.style.animationDelay = '0.1s';
@@ -227,7 +228,7 @@ function updateReaderData(data){
     div.style.animationDelay = '0s';
   }
   if(readerData !== data && data){ // different data?
-    Sounds['cardScan']?.play();
+    Sounds[registeredEvent ? 'cardScanBeep' : 'cardScan']?.play();
     console.log("NEW CARD!", data, registeredEvent);
     get(child(ref(database), `cards/${data}/e`)).then(async snapshot => {
       const owner = snapshot.val();
@@ -247,7 +248,7 @@ function updateReaderData(data){
         set(child(ref(database), `events/${registeredEvent}/c`), increment(1));
       }
       const userdata = (await get(child(ref(database), `data/${owner.replaceAll('.','@')}`))).val();
-      updateCardResult(userdata);
+      updateCardResult(userdata, {suppressSound: true});
       // updateFeedback("CARD DATA\n" + Object.entries(userdata).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join('\n'));
     });
   }
