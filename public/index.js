@@ -418,6 +418,38 @@ function loadReaderApplication(){
     }
   });
 
+  const newParticipantButton = document.createElement('button');
+  newParticipantButton.innerText = "+ Person";
+  newParticipantButton.addEventListener('click', async () => {
+    await sleep(10);
+    const prompts = [
+      "Enter the email of the participant",
+      "Enter the name of the participant",
+      "Enter participants dietary restictions (enter 'None' if there are none)",
+      "Enter participants shirt size (S, M, L, XL)",
+    ];
+    const promptLabels = ["Email", "Name", "Dietary Restrictions", "Shirt Size"];
+    const promptResponses = [];
+    for(const promptString of prompts){
+      const response = prompt(promptString);
+      if(!response) return;
+      promptResponses.push(response);
+    }
+    if(!confirm(`Confirmation\n${promptLabels.map((label, i) => `${label}: ${promptResponses[i]}`).join('\n')}`)) return;
+    const [email, name, diet, shirtSize] = promptResponses;
+    const userObject = {
+      "e": email,
+      "pii": JSON.stringify([name, diet, shirtSize]),
+    };
+    await update(child(ref(database), `data/${email.replaceAll('.', '@')}`), userObject);
+    updatePeripheralData({
+      email: email,
+      emailAsKey: email.replaceAll('.','@'),
+      uid: "impromptu"+Date.now()+"::"+Math.random().toString().slice(2),
+      user: userObject,
+    })
+  });
+
   const eventContainer = document.createElement('div');
   eventContainer.classList.add('eventContainer');
   onChildAdded(child(ref(database), `events`), (snapshot) => {
@@ -485,7 +517,7 @@ function loadReaderApplication(){
     eventContainer.append(eventBar);
 }, console.error);
 
-  container.append(openReaderButton, peerReconnect, newEventButton, peripheralDataStatus, readerDataStatus, linkCardsButton);
+  container.append(openReaderButton, peerReconnect, newEventButton, newParticipantButton, peripheralDataStatus, readerDataStatus, linkCardsButton);
   document.body.append(container, eventContainer);
 
   // for testing
@@ -495,7 +527,7 @@ function loadReaderApplication(){
     uid: "testaccount",
     user: {
       "e": "test@test.test",
-      "pii": "datadata",
+      "pii": `["Test user","XL","None"]`,
     },
   });
   readerDataStatus.onclick = () => updateReaderData("testcardnumber");
