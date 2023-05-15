@@ -521,7 +521,7 @@ function loadReaderApplication(){
   document.body.append(container, eventContainer);
 
   // for testing
-  peripheralDataStatus.onclick = () => updatePeripheralData({
+  peripheralDataStatus.onclick = (e) => updatePeripheralData(e.ctrlKey ? {
     email: "test@test.test",
     emailAsKey: "test@test.test".replaceAll('.','@'),
     uid: "testaccount",
@@ -529,8 +529,8 @@ function loadReaderApplication(){
       "e": "test@test.test",
       "pii": `["Test user","XL","None"]`,
     },
-  });
-  readerDataStatus.onclick = () => updateReaderData("testcardnumber");
+  } : null);
+  readerDataStatus.onclick = (e) => updateReaderData(e.ctrlKey ? "testcardnumber" : null);
   updatePeripheralData();
   updateReaderData();
 }
