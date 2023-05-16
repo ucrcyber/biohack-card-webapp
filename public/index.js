@@ -237,15 +237,17 @@ function updateReaderData(data){
   if(readerData !== data){
     replayAnimation(div);
     div.style.animationDelay = '0s';
+    div.style.background = data ? "darkgreen" : "darkred";
+    div.innerText = data ? "Card OK" : "no card scanned";
+    sleep(100).then(() => updateCardResult());
   }
-  div.style.background = data ? "darkgreen" : "darkred";
-  div.innerText = data ? "Card OK" : "no card scanned";
   if(readerData !== data && data){ // different data?
     Sounds[registeredEvent ? 'cardScanBeep' : 'cardScan']?.play();
     console.log("NEW CARD!", data, registeredEvent);
     get(child(ref(database), `cards/${data}/e`)).then(async snapshot => {
       const owner = snapshot.val();
       if(owner){
+        const div = document.getElementById("readerData");
         div.style.background = "darkgoldenrod";
         div.innerText = "Card IN_USE";
         updateFeedback("[WARN] This card is already in use by another person!");
@@ -272,7 +274,6 @@ function updateReaderData(data){
   }
   readerData = data;
   updateLinkStatus();
-  if(!data) updateCardResult();
 }
 function updateLinkStatus(){
   const button = document.querySelector('#linkCards');
