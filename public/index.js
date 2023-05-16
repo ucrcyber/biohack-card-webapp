@@ -496,7 +496,7 @@ function loadReaderApplication(){
       Sounds['changeDesc']?.play();
       await sleep(10); // wait for sound to start playing first
       const payload = prompt(`Enter a new name for event ${name}`);
-      if(payload) update(child(ref(database), `events/${id}/n`), payload);
+      if(payload) update(child(ref(database), `events/${id}`), {n: payload});
     };
 
     const descriptionDiv = document.createElement('div');
@@ -506,7 +506,7 @@ function loadReaderApplication(){
       Sounds['changeDesc']?.play();
       await sleep(10); // wait for sound to start playing first
       const payload = prompt(`Enter a new description for event ${name}\nOld description: ${description}`);
-      if(payload) update(child(ref(database), `events/${id}/n`), payload);
+      if(payload) update(child(ref(database), `events/${id}`), {d: payload});
     };
     const selectEventButton = document.createElement('button');
     selectEventButton.innerText = 'Select';
