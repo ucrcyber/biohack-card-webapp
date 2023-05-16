@@ -175,9 +175,11 @@ function updatePeripheralData(data){
   if(peripheralData && peripheralData.emailAsKey){
     get(child(ref(database), `data/${peripheralData.emailAsKey}/card`)).then(async snapshot => {
       console.log('card of user', snapshot.val());
-      div.style.background = "darkgoldenrod";
-      div.innerText = "User HAS_CARD";
-      updateFeedback("[WARN] This user has already been assigned a card");
+      if(snapshot.val()){
+        div.style.background = "darkgoldenrod";
+        div.innerText = "User HAS_CARD";
+        updateFeedback("[WARN] This user has already been assigned a card");
+      }
     });
   }
 }
@@ -242,11 +244,13 @@ function updateReaderData(data){
     Sounds[registeredEvent ? 'cardScanBeep' : 'cardScan']?.play();
     console.log("NEW CARD!", data, registeredEvent);
     get(child(ref(database), `cards/${data}/e`)).then(async snapshot => {
-      div.style.background = "darkgoldenrod";
-      div.innerText = "Card IN_USE";
-      updateFeedback("[WARN] This card is already in use by another person!");
       const owner = snapshot.val();
-      if(registeredEvent){
+      if(owner){
+        div.style.background = "darkgoldenrod";
+        div.innerText = "Card IN_USE";
+        updateFeedback("[WARN] This card is already in use by another person!");
+      }
+      if(owner && registeredEvent){
         push(child(ref(database), `re`), {
           t: serverTimestamp(),
           c: owner,
