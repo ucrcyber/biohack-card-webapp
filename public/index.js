@@ -234,7 +234,7 @@ async function updateCardResult(data, opts={}){
 }
 function updateReaderData(data){
   const div = document.querySelector("#readerData");
-  if(!readerData !== !data){
+  if(readerData !== data){
     replayAnimation(div);
     div.style.animationDelay = '0s';
   }
