@@ -204,7 +204,7 @@ async function updateCardResult(data, opts={}){
     div.classList.add('slideIn', 'cardResult');
     // div.innerText = JSON.stringify(data);
     const userData = JSON.parse(data.pii) || ["unknown", "-", "-"];
-    const userDataLabels = ['Name', 'Tshirt Size', 'Dietary Restrictions'];
+    const userDataLabels = ['Name', 'Dietary Restrictions', 'Tshirt Size'];
     for(let k in userDataLabels){
       const descriptorBar = document.createElement('div');
       descriptorBar.classList.add('bar');
