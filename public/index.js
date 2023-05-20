@@ -468,69 +468,75 @@ function loadReaderApplication(){
 
   const eventContainer = document.createElement('div');
   eventContainer.classList.add('eventContainer');
-  onChildAdded(child(ref(database), `events`), (snapshot) => {
-    const id = snapshot.key;
-    const snapshotValue = snapshot.val();
-    let [name, description] = ["n", "d"].map(k => snapshotValue[k]);
-    const eventBar = document.createElement('div');
-    eventBar.classList.add('event');
+  get(child(ref(database), `events`)).then((snapshot) => {
+    // console.log(snapshot.val());
+    // const id = snapshot.key;
+    // const snapshotValue = snapshot.val();
+    const sortedList = Object.entries(snapshot.val());
+    sortedList.sort((a,b) => a[1]['n'].localeCompare(b[1]['n'], undefined, { numeric: true })); // sort by title
+    console.log(sortedList);
+    for(const [id, snapshotValue] of sortedList){
+      let [name, description] = ["n", "d"].map(k => snapshotValue[k]);
+      const eventBar = document.createElement('div');
+      eventBar.classList.add('event');
 
-    const globalCounterDiv = document.createElement('div');
-    // globalCounterDiv.id = `gct-${id}`;
-    globalCounterDiv.classList.add('counter', 'globalCounter');
-    onValue(child(ref(database), `events/${id}/c`), snapshot => {
-      replayAnimation(globalCounterDiv);
-      globalCounterDiv.innerText = `${snapshot.val() || 0}`;
-    }, console.error);
+      const globalCounterDiv = document.createElement('div');
+      // globalCounterDiv.id = `gct-${id}`;
+      globalCounterDiv.classList.add('counter', 'globalCounter');
+      onValue(child(ref(database), `events/${id}/c`), snapshot => {
+        replayAnimation(globalCounterDiv);
+        globalCounterDiv.innerText = `${snapshot.val() || 0}`;
+      }, console.error);
 
-    const counterDiv = document.createElement('div');
-    counterDiv.id = `ct-${id}`;
-    counterDiv.classList.add('counter');
-    counterDiv.innerText = "0";
+      const counterDiv = document.createElement('div');
+      counterDiv.id = `ct-${id}`;
+      counterDiv.classList.add('counter');
+      counterDiv.innerText = "0";
 
-    const nameDiv = document.createElement('div');
-    nameDiv.classList.add('title', 'customSuccessSfx');
-    onValue(child(ref(database), `events/${id}/n`), snapshot => nameDiv.innerText = `${name=snapshot.val()}`, console.error);
-    nameDiv.onclick = async () => {
-      Sounds['changeDesc']?.play();
-      await sleep(10); // wait for sound to start playing first
-      const payload = prompt(`Enter a new name for event ${name}`);
-      if(payload) update(child(ref(database), `events/${id}`), {n: payload});
-    };
+      const nameDiv = document.createElement('div');
+      nameDiv.classList.add('title', 'customSuccessSfx');
+      onValue(child(ref(database), `events/${id}/n`), snapshot => nameDiv.innerText = `${name=snapshot.val()}`, console.error);
+      nameDiv.onclick = async () => {
+        Sounds['changeDesc']?.play();
+        await sleep(10); // wait for sound to start playing first
+        const payload = prompt(`Enter a new name for event ${name}`);
+        if(payload) update(child(ref(database), `events/${id}`), {n: payload});
+      };
 
-    const descriptionDiv = document.createElement('div');
-    descriptionDiv.classList.add('description', 'customSuccessSfx');
-    onValue(child(ref(database), `events/${id}/d`), snapshot => descriptionDiv.innerText = `${description=snapshot.val()}`, console.error);
-    descriptionDiv.onclick = async () => {
-      Sounds['changeDesc']?.play();
-      await sleep(10); // wait for sound to start playing first
-      const payload = prompt(`Enter a new description for event ${name}\nOld description: ${description}`);
-      if(payload) update(child(ref(database), `events/${id}`), {d: payload});
-    };
-    const selectEventButton = document.createElement('button');
-    selectEventButton.innerText = 'Select';
-    selectEventButton.classList.add('customSuccessSfx', 'customFailSfx');
-    selectEventButton.addEventListener('click', async () => {
-      if(selectEventButton.classList.contains('disabled')) return Sounds['button-onclick-disabled'].play();
-      if(registeredEventElement){
-        const registeredEventButton = document.querySelector('div.event.selected > button.disabled');
-        registeredEventButton.classList.remove('disabled');
-        registeredEventElement.classList.remove('selected');
-        replayAnimation(registeredEventButton);
-      }
-      registeredEventElement = eventBar;
-      registeredEventElement.classList.add('selected');
-      selectEventButton.classList.add('disabled');
-      registeredEvent = id;
-      Sounds['selectEvent'].play();
-      console.log("halp", Sounds['selectEvent']);
+      const descriptionDiv = document.createElement('div');
+      descriptionDiv.classList.add('description', 'customSuccessSfx');
+      onValue(child(ref(database), `events/${id}/d`), snapshot => descriptionDiv.innerText = `${description=snapshot.val()}`, console.error);
+      descriptionDiv.onclick = async () => {
+        Sounds['changeDesc']?.play();
+        await sleep(10); // wait for sound to start playing first
+        const payload = prompt(`Enter a new description for event ${name}\nOld description: ${description}`);
+        if(payload) update(child(ref(database), `events/${id}`), {d: payload});
+      };
+      const selectEventButton = document.createElement('button');
+      selectEventButton.innerText = 'Select';
+      selectEventButton.classList.add('customSuccessSfx', 'customFailSfx');
+      selectEventButton.addEventListener('click', async () => {
+        if(selectEventButton.classList.contains('disabled')) return Sounds['button-onclick-disabled'].play();
+        if(registeredEventElement){
+          const registeredEventButton = document.querySelector('div.event.selected > button.disabled');
+          registeredEventButton.classList.remove('disabled');
+          registeredEventElement.classList.remove('selected');
+          replayAnimation(registeredEventButton);
+        }
+        registeredEventElement = eventBar;
+        registeredEventElement.classList.add('selected');
+        selectEventButton.classList.add('disabled');
+        registeredEvent = id;
+        Sounds['selectEvent'].play();
+        console.log("halp", Sounds['selectEvent']);
 
-      // if you ever select, you dont need to link cards anymore (probably)
-      container.classList.add('floatUp');
-    });
+        // if you ever select, you dont need to link cards anymore (probably)
+        container.classList.add('floatUp');
+      });
 
-    eventBar.append(globalCounterDiv, counterDiv, nameDiv, descriptionDiv, selectEventButton);
-    eventContainer.append(eventBar);
+      eventBar.append(globalCounterDiv, counterDiv, nameDiv, descriptionDiv, selectEventButton);
+      eventContainer.append(eventBar);
+    }
 }, console.error);
 
   container.append(openReaderButton, peerReconnect, webcamConnectButton, newEventButton, newParticipantButton, peripheralDataStatus, readerDataStatus, linkCardsButton);
