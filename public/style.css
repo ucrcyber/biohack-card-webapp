@@ -104,7 +104,6 @@ button, .statusBar {
 .eventContainer {
     display: flex;
     flex-direction: column;
-    gap: 1em;
     margin-top: 1em;
     max-height: 80%;
     overflow-y: scroll;
@@ -115,8 +114,17 @@ button, .statusBar {
     justify-content: center;
     align-items: center;
     gap: 1em;
+    padding: 0.5em;
     border-right: 4px solid transparent;
     transition: background-color 0.2s var(--ease-out), border-color 0.2s var(--ease-out);
+}
+.event:has(.green) {
+    color: darkgreen;
+    background: lightgreen;
+}
+.event:has(.red) {
+    color: darkred;
+    background: pink;
 }
 .event:hover {
     background-color: rgba(0, 0, 0, 0.05);
@@ -194,7 +202,7 @@ button, .statusBar {
 .cardResult {
     padding: 1em;
     position: absolute;
-    bottom: 1em;
+    bottom: 3em;
     right: 3em;
     max-width: 50%;
     overflow-wrap: anywhere;
@@ -221,5 +229,5 @@ button, .statusBar {
 .cardResult > .bar > .description {
     color: black;
     text-align: left;
-    width: 12em;
+    width: 16em;
 }

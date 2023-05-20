@@ -187,6 +187,7 @@ async function updateCardResult(data, opts={}){
   const suppressSound = opts?.suppressSound;
   const existing = document.querySelector('div.slideIn.cardResult:not(.discard)');
   if(existing){
+    [...document.querySelectorAll('.event > .counter')].forEach(e => e.classList.remove('red', 'green')); // clear nonzero displays
     await sleep(200); // stagger result update to let click sfx finish before starting next action
     existing.classList.add('discard');
     existing.style.transform = 'translateX(1em)';
@@ -225,10 +226,12 @@ async function updateCardResult(data, opts={}){
     div.style.transform = 'translateY(0)';
     div.style.animationName = 'flickerIn';
     div.style.animationDelay = '0.1s';
+    [...document.querySelectorAll('.event > .counter')].forEach(e => e.classList.remove('red', 'green')); // clear nonzero displays
     for(const [eventId, eventCheckins] of Object.entries(data.a || {})){
       const counterElement = document.getElementById(`ct-${eventId}`);
       if(counterElement.innerText != eventCheckins) replayAnimation(counterElement);
       counterElement.innerText = eventCheckins;
+      if(eventCheckins > 0) counterElement.classList.add(eventCheckins >= 2 ? 'red' : 'green');
     }
   }
 }
@@ -239,7 +242,7 @@ function updateReaderData(data){
     div.style.animationDelay = '0s';
     div.style.background = data ? "darkgreen" : "darkred";
     div.innerText = data ? "Card OK" : "no card scanned";
-    sleep(100).then(() => updateCardResult());
+    if(!data) sleep(100).then(() => updateCardResult());
   }
   if(readerData !== data && data){ // different data?
     Sounds[registeredEvent ? 'cardScanBeep' : 'cardScan']?.play();
