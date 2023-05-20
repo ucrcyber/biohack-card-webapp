@@ -76,7 +76,6 @@ const qrcode = new QRCode(document.getElementById("qrcode"), {
   colorLight: "#fff",
   correctLevel: QRCode.CorrectLevel.H,
 });
-document.getElementById("qrcode").addEventListener('click', () => qrcodeDisplay());
 qrcodeDisplay();
 function qrcodeDisplay(code){
   console.log("qrUpdate", code);
@@ -104,6 +103,7 @@ document.querySelector('#login').addEventListener('click', async () => {
   if(userSnapshot.p){ // operator
     // load up web
     loadReaderApplication();
+    document.getElementById("qrcode").addEventListener('click', () => qrcodeDisplay()); // allow hiding on operator side
   } else { // participant
     console.log(userSnapshot.e, userSnapshot.t); // for data
     try {
@@ -342,6 +342,26 @@ function loadReaderApplication(){
     }
   };
 
+  const webcamConnectButton = document.createElement('button');
+  webcamConnectButton.innerText = "Connect webcam";
+  webcamConnectButton.title = "qr scanner (from same device)";
+  webcamConnectButton.addEventListener('click', () => {
+    webcamConnectButton.disabled = true;
+    let lastResult = "";
+    function onScanSuccess(decodedText, decodedResult) {
+      if (decodedText !== lastResult) {
+        lastResult = decodedText;
+        // Handle on success condition with the decoded message.
+        console.log(`Scan result ${decodedText}`, decodedResult);
+        processClientQrCode(decodeURIComponent(decodedText.replace(/.*?data=/,'').trim()));
+      }
+    }
+  
+    var html5QrcodeScanner = new Html5QrcodeScanner(
+      "qr-reader", { fps: 10, qrbox: 250 });
+    html5QrcodeScanner.render(onScanSuccess);
+  });
+
   const linkCardsButton = document.createElement("button");
   linkCardsButton.id = "linkCards";
   linkCardsButton.innerText = "Link to card";
@@ -392,31 +412,7 @@ function loadReaderApplication(){
         connection.send("ok");
         connection.close();
         
-        const [uid, time] = data.split(','); // what client claims
-        let validQrCode = false;
-        try {
-          // try to map userid to user metadata
-          const userEmail = (await get(child(ref(database), `users/${uid}/e`))).val(); // what server says
-          const timeUpdate = (await get(child(ref(database), `users/${uid}/t`))).val(); // what server says
-          if(userEmail === null || timeUpdate === null) return updateFeedback("Invalid code, this account does not exist");
-          if(+time !== timeUpdate) return updateFeedback("Invalid code (timestamp mismatch), ask for user to reload page");
-          // try to get user data
-          const userdataSnapshot = (await get(child(ref(database), `data/${userEmail.replaceAll('.','@')}`))).val(); // e, pii
-          if(userdataSnapshot === null) return updateFeedback("Invalid code (no data for user), user is not registered for the event");
-          // its all good
-          validQrCode = true;
-          updateFeedback(`Valid user data recieved ${userEmail} ${uid} ${userdataSnapshot}`);
-          updatePeripheralData({
-            email: userEmail,
-            emailAsKey: userEmail.replaceAll('.','@'),
-            uid,
-            user: userdataSnapshot,
-          });
-        } catch (err){
-          updateFeedback(`Invalid code (no data for user), user is not registered\n${err}`);
-        }
-        if(validQrCode) Sounds['phoneScanPass']?.play();
-        else Sounds['phoneScanFail']?.play();
+        processClientQrCode(data);
       });
       // connection.on("open", () => console.log(" >!!", connection.peer));
       // connection.on("close", () => console.log("<--<", connection.peer));
@@ -537,7 +533,7 @@ function loadReaderApplication(){
     eventContainer.append(eventBar);
 }, console.error);
 
-  container.append(openReaderButton, peerReconnect, newEventButton, newParticipantButton, peripheralDataStatus, readerDataStatus, linkCardsButton);
+  container.append(openReaderButton, peerReconnect, webcamConnectButton, newEventButton, newParticipantButton, peripheralDataStatus, readerDataStatus, linkCardsButton);
   document.body.append(container, eventContainer);
 
   // for testing
@@ -553,4 +549,31 @@ function loadReaderApplication(){
   readerDataStatus.onclick = (e) => updateReaderData(e.ctrlKey ? "testcardnumber" : null);
   updatePeripheralData();
   updateReaderData();
+}
+async function processClientQrCode(data){
+  const [uid, time] = data.split(','); // what client claims
+  let validQrCode = false;
+  try {
+    // try to map userid to user metadata
+    const userEmail = (await get(child(ref(database), `users/${uid}/e`))).val(); // what server says
+    const timeUpdate = (await get(child(ref(database), `users/${uid}/t`))).val(); // what server says
+    if(userEmail === null || timeUpdate === null) return updateFeedback("Invalid code, this account does not exist");
+    if(+time !== timeUpdate) return updateFeedback("Invalid code (timestamp mismatch), ask for user to reload page");
+    // try to get user data
+    const userdataSnapshot = (await get(child(ref(database), `data/${userEmail.replaceAll('.','@')}`))).val(); // e, pii
+    if(userdataSnapshot === null) return updateFeedback("Invalid code (no data for user), user is not registered for the event");
+    // its all good
+    validQrCode = true;
+    updateFeedback(`Valid user data recieved ${userEmail} ${uid} ${userdataSnapshot}`);
+    updatePeripheralData({
+      email: userEmail,
+      emailAsKey: userEmail.replaceAll('.','@'),
+      uid,
+      user: userdataSnapshot,
+    });
+  } catch (err){
+    updateFeedback(`Invalid code (no data for user), user is not registered\n${err}`);
+  }
+  if(validQrCode) Sounds['phoneScanPass']?.play();
+  else Sounds['phoneScanFail']?.play();
 }
